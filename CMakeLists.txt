@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.21)
 project(Pipe)
 
-include_directories(lib/external/glfw-3.3.9.bin.WIN64/include)
+include_directories(lib/external/glfw-3.3.9.bin.WIN64/include lib/external)
 
-link_directories(lib/external/glfw-3.3.9.bin.WIN64/lib-mingw-w64)
+link_directories(lib/external/glfw-3.3.9.bin.WIN64/lib-mingw-w64 lib/external)
 
 set(CMAKE_CXX_STANDARD 14)
 

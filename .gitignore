@@ -1,0 +1,7 @@
+/lib/external/
+bin/
+cmake-build-debug/
+Pipe.iml
+vcs.xml
+misc.xml
+modules.xml
