@@ -2,6 +2,9 @@
 #include "lib/back.h"
 using namespace std;
 
+#define WIDTH 800
+#define HEIGHT 600
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int main() {
@@ -15,7 +18,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow *win;
-    win = glfwCreateWindow(800, 600, "Water", nullptr, nullptr);
+    win = glfwCreateWindow(WIDTH, HEIGHT, "Water Demo", nullptr, nullptr);
     glfwMakeContextCurrent(win);
 
     gladLoadGL();
@@ -23,18 +26,13 @@ int main() {
     glViewport(0, 0, 800,600);
     glfwSetFramebufferSizeCallback(win, framebuffer_size_callback);
 
-//    int nx = 100;
-//    int nz = 100;
-//    unsigned int water = genWater(100.0, 100.0, 100, 100, -1.0);
+    glEnable(GL_DEPTH_TEST);
 
-    float vertices[] = {
-            -0.5f, -0.5f, 0.0f, // left
-            0.5f, -0.5f, 0.0f, // right
-            0.0f,  0.5f, 0.0f  // top
-    };
+    int small = 100;
+    IndexedArray close = genWater(50.0, 50.0, small, small, -1.0);
 
-    VertexArray v(vertices, 3);
-    v.bind();
+    int medium = 100;
+    IndexedArray distant = genWater(1000.0, 1000.0, medium, medium, -1.0);
 
     ShaderProgram red;
     red.openShader("../water.vert", GL_VERTEX_SHADER);
@@ -43,19 +41,30 @@ int main() {
 
     while (!glfwWindowShouldClose(win)) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         red.use();
-        v.bind();
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        v.unbind();
 
-        GLenum error = glGetError();
-        if (error != GL_NO_ERROR) {
-            std::cerr << "OpenGL error: " << error << std::endl;
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), float(WIDTH) / float(HEIGHT), 0.1f, 100.0f);
+        glm::mat4 identity(1.0);
+
+        glm::mat4 view = glm::rotate(identity, glm::radians(15.0f), glm::vec3(1.0, 0.0, 0.0));
+        view = glm::rotate(view, float(glm::radians(glfwGetTime() * 10.0f)), glm::vec3(0.0, 1.0, 0.0));
+
+        red.setMat4("projection", projection);
+        red.setMat4("view", view);
+        red.setMat4("model", glm::translate(identity, glm::vec3(0.0, -10.0, 0.0)));
+
+        red.setFloat("time", glfwGetTime());
+
+        close.draw();
+
+        GLenum err = glGetError();
+        if (err != GL_NO_ERROR) {
+            cerr << "OpenGL error: " << err << endl;
         }
 
-        glfwWaitEvents();
+        glfwPollEvents();
         glfwSwapBuffers(win);
     }
 
