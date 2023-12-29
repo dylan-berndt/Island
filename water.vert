@@ -9,30 +9,45 @@ uniform float time;
 
 out vec3 FragPos;
 
-#define SAMPLES 3
+#define SAMPLES 8
+#define DRAG_MULT 0.2
 
-const float[SAMPLES] weights = float[SAMPLES](1.0, 0.5, 0.125);
-const float[SAMPLES] scales  = float[SAMPLES](0.5, 1.0, 2.0);
-const float[SAMPLES] freqs   = float[SAMPLES](0.2, 1.0, 2.2);
-
-float value(float v) {
-    float sum = 0.0;
-
-    for (int i = 0; i < SAMPLES; i++) {
-        sum += weights[i] * sin(v * scales[i] + time * freqs[i]);
-    }
-
-    return sum;
+vec2 wavedx(vec2 position, vec2 direction, float frequency, float timeshift) {
+    float x = dot(direction, position) * frequency + timeshift;
+    float wave = exp(sin(x) - 1.0);
+    float dx = wave * cos(x);
+    return vec2(wave, -dx);
 }
 
-float displace(vec3 position) {
-    return value(position.x) + value(position.z);
+float getWaves(vec2 position) {
+    float iter = 0.0;
+    float frequency = 1.0;
+    float timeMultiplier = 2.0;
+    float weight = 1.0;
+    float sumOfValues = 0.0;
+    float sumOfWeights = 0.0;
+    for(int i = 0; i < SAMPLES; i++) {
+        vec2 p = vec2(sin(iter), cos(iter));
+        vec2 res = wavedx(position, p, frequency, time * timeMultiplier);
+
+        position += p * res.y * weight * DRAG_MULT;
+
+        sumOfValues += res.x * weight;
+        sumOfWeights += weight;
+
+        weight *= 0.82;
+        frequency *= 1.18;
+        timeMultiplier *= 1.07;
+
+        iter += 1232.399963;
+    }
+    return 4.0 * sumOfValues / sumOfWeights;
 }
 
 void main() {
     vec4 worldPos = model * vec4(aPos, 1.0);
     FragPos = vec3(worldPos);
 
-    vec4 shift = vec4(0.0, displace(aPos), 0.0, 0.0);
+    vec4 shift = vec4(0.0, getWaves(aPos.xz), 0.0, 0.0);
     gl_Position = projection * view * model * vec4(aPos, 1.0) + shift;
 }
