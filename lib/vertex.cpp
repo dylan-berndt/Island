@@ -2,9 +2,9 @@
 #include "back.h"
 #include "vertex.h"
 
-VertexArray::VertexArray(float *v, int size, int mode) {
+VertexArray::VertexArray(Vertex *v, int size, int mode) {
     vertices = v;
-    amount = size / 3;
+    amount = size;
     unsigned int a, b; VAO = a; VBO = b;
 
     glGenVertexArrays(1, &VAO);
@@ -12,10 +12,14 @@ VertexArray::VertexArray(float *v, int size, int mode) {
     glBindVertexArray(VAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, size * 3 * sizeof(float), vertices, mode);
+    glBufferData(GL_ARRAY_BUFFER, size * sizeof(Vertex), vertices, mode);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
 }
 
 void VertexArray::unbind() {

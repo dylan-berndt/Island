@@ -5,16 +5,32 @@
 
 #include "back.h"
 
+class Vertex {
+public:
+    Vertex(glm::vec3 p, glm::vec3 c = glm::vec3(0.0, 0.0, 0.0), glm::vec2 t = glm::vec2(0.0, 0.0)) {
+        position = p; color = c; texCoord = t;
+    }
+    Vertex(glm::vec3 p, glm::vec2 t) {
+        position = p; color = glm::vec3(0.0, 0.0, 0.0); texCoord = t;
+    }
+    Vertex(float x, float y, float z) {
+        position = glm::vec3(x, y, z); color = glm::vec3(0.0, 0.0, 0.0); texCoord = glm::vec2(0.0, 0.0);
+    }
+    glm::vec3 position;
+    glm::vec3 color;
+    glm::vec2 texCoord;
+};
+
 class VertexArray {
 public:
     void bind() const;
     static void unbind();
     void draw() const;
-    VertexArray(float *v, int size, int mode = GL_STATIC_DRAW);
+    VertexArray(Vertex *v, int size, int mode = GL_STATIC_DRAW);
 private:
     unsigned int VAO;
     unsigned int VBO;
-    float *vertices;
+    Vertex *vertices;
     int amount;
 };
 
@@ -32,5 +48,6 @@ private:
     unsigned int *indices;
     int amount;
 };
+
 
 #endif //PIPE_VERTEX_H

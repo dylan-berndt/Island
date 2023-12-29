@@ -31,15 +31,15 @@ int main() {
     int amount = 200;
     IndexedArray water = genWater(100.0, 100.0, amount, amount, -1.0);
 
-    float vertices[] = {
-            -1.0, 1.0, 0.0,
-            1.0, 1.0, 0.0,
-            -1.0, -1.0, 0.0,
-            1.0, 1.0, 0.0,
-            1.0, -1.0, 0.0,
-            -1.0, -1.0, 0.0
+    Vertex vertices[] = {
+            Vertex(glm::vec3(-1.0, 1.0, 0.0), glm::vec2(0.0, 1.0)),
+            Vertex(glm::vec3(1.0, 1.0, 0.0), glm::vec2(1.0, 1.0)),
+            Vertex(glm::vec3(-1.0, -1.0, 0.0), glm::vec2(0.0, 0.0)),
+            Vertex(glm::vec3(1.0, 1.0, 0.0), glm::vec2(1.0, 1.0)),
+            Vertex(glm::vec3(1.0, -1.0, 0.0), glm::vec2(1.0, 0.0)),
+            Vertex(glm::vec3(-1.0, -1.0, 0.0), glm::vec2(0.0, 0.0))
     };
-    VertexArray screen(vertices, 6 * 3);
+    VertexArray screen(vertices, 6);
 
     ShaderProgram water_shader;
     water_shader.openShader("../water.vert", GL_VERTEX_SHADER);
@@ -87,6 +87,9 @@ int main() {
 
         buffer.unbind();
 
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         post_shader.use();
 
         depth_texture.activate(GL_TEXTURE0);
@@ -94,8 +97,11 @@ int main() {
 
         post_shader.setInt("depth", 0);
         post_shader.setInt("color", 1);
+        post_shader.setVec3("col", glm::vec3(0.0, 1.0, 0.0));
 
         screen.draw();
+
+        post_shader.stop();
 
         GLenum err = glGetError();
         if (err != GL_NO_ERROR) {
