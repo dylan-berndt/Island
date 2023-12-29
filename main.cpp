@@ -2,8 +2,8 @@
 #include "lib/pipe.h"
 using namespace std;
 
-#define WIDTH 1200
-#define HEIGHT 800
+#define WIDTH (1920 / 2)
+#define HEIGHT (1080 / 2)
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
@@ -31,14 +31,39 @@ int main() {
     int amount = 200;
     IndexedArray water = genWater(100.0, 100.0, amount, amount, -1.0);
 
+    float vertices[] = {
+            -1.0, 1.0, 0.0,
+            1.0, 1.0, 0.0,
+            -1.0, -1.0, 0.0,
+            1.0, 1.0, 0.0,
+            1.0, -1.0, 0.0,
+            -1.0, -1.0, 0.0
+    };
+    VertexArray screen(vertices, 6 * 3);
+
     ShaderProgram water_shader;
     water_shader.openShader("../water.vert", GL_VERTEX_SHADER);
     water_shader.openShader("../water.frag", GL_FRAGMENT_SHADER);
     water_shader.compile();
 
+    ShaderProgram post_shader;
+    post_shader.openShader("../post.vert", GL_VERTEX_SHADER);
+    post_shader.openShader("../post.frag", GL_FRAGMENT_SHADER);
+    post_shader.compile();
+
+    Texture2D color_texture("", GL_RGB, WIDTH, HEIGHT);
+    Texture2D depth_texture("", GL_DEPTH_COMPONENT, WIDTH, HEIGHT, GL_FLOAT);
+
+    FrameBuffer buffer;
+
+    buffer.attachTexture2D(GL_COLOR_ATTACHMENT0, color_texture);
+    buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, depth_texture);
+
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), float(WIDTH) / float(HEIGHT), 0.1f, 100.0f);
 
     while (!glfwWindowShouldClose(win)) {
+        buffer.bind();
+
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -57,6 +82,20 @@ int main() {
         water_shader.setFloat("time", float(glfwGetTime()));
 
         water.draw();
+
+        water_shader.stop();
+
+        buffer.unbind();
+
+        post_shader.use();
+
+        depth_texture.activate(GL_TEXTURE0);
+        color_texture.activate(GL_TEXTURE1);
+
+        post_shader.setInt("depth", 0);
+        post_shader.setInt("color", 1);
+
+        screen.draw();
 
         GLenum err = glGetError();
         if (err != GL_NO_ERROR) {

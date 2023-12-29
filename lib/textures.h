@@ -4,20 +4,28 @@
 
 #include "back.h"
 
-class FrameBuffer {
-public:
-    FrameBuffer();
-    void bind() const;
-    void unbind() const;
-private:
-    unsigned int self;
-};
-
 class Texture2D {
 public:
-    Texture2D();
+    void activate(int num) const;
     void bind() const;
-    void unbind() const;
+    static void unbind();
+    int width;
+    int height;
+    unsigned int id() const {return self;};
+    explicit Texture2D(const char* name, int t = GL_RGBA, int w = 0, int h = 0, int dtype = GL_UNSIGNED_BYTE);
+private:
+    unsigned int self;
+    unsigned char* data;
+    int channels;
+};
+
+
+class FrameBuffer {
+public:
+    void bind() const;
+    static void unbind();
+    void attachTexture2D(int attachment, Texture2D texture) const;
+    FrameBuffer();
 private:
     unsigned int self;
 };
