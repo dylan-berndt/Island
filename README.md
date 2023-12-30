@@ -2,12 +2,16 @@
 
 This is a water rendering project I have been working on to learn OpenGL and create a framework I can use for other graphics programming projects.
 
-## Current Progress
+## 12/29/23
 
 Framebuffers implemented, Vertex Array Objects made more flexible, some adjustments to the effects. 
 Textures also implemented but not heavily utilized yet. Indexed Arrays will need similar flexibility upgrades.
 
 ![ezgif-1-7a5e82feab](https://github.com/dylan-berndt/Water-Demo/assets/33700799/73b841b0-264e-42bf-8ca4-5618e1171037)
+
+Implemented bloom for fun.
+
+![ezgif-5-405160b07d](https://github.com/dylan-berndt/Water-Demo/assets/33700799/a092767f-325d-48a3-97fc-96a6bf60e052)
 
 ## 12/28/23
 
