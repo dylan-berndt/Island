@@ -36,33 +36,14 @@ void VertexArray::draw() const {
     unbind();
 }
 
-IndexedArray::IndexedArray(float *v, int vs, unsigned int *i, int is, int mode) {
-    vertices = v;
+IndexedArray::IndexedArray(Vertex *v, int vsize, unsigned int *i, int isize, int mode) : VertexArray(v, vsize, mode) {
     indices = i;
-    amount = is;
-    unsigned int a, b, e; VAO = a; VBO = b; EBO = e;
+    amount = isize;
 
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glBindVertexArray(VAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vs * 3 * sizeof(float), vertices, mode);
-
+    unsigned int e; EBO = e;
     glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, is * sizeof(unsigned int), indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-}
-
-void IndexedArray::unbind() {
-    glBindVertexArray(0);
-}
-
-void IndexedArray::bind() const {
-    glBindVertexArray(VAO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, isize * sizeof(unsigned int), indices, GL_STATIC_DRAW);
 }
 
 void IndexedArray::draw() const {

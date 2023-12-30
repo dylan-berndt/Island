@@ -2,8 +2,8 @@
 #include "pipe.h"
 using namespace std;
 
-float *flatMesh(float width, float depth, int nx, int nz, float height) {
-    auto *mesh = new float[nx * nz * 3];
+Vertex *flatMesh(float width, float depth, int nx, int nz, float height) {
+    auto *mesh = new Vertex[nx * nz];
 
     int start = 0;
     for (int pz = 0; pz < nz; pz++) {
@@ -12,8 +12,8 @@ float *flatMesh(float width, float depth, int nx, int nz, float height) {
             float y = height;
             float z = depth * (float(pz) / (float(nz) / 2.0f) - 1.0f);
 
-            mesh[start] = x; mesh[start + 1] = y; mesh[start + 2] = z;
-            start += 3;
+            mesh[start] = Vertex(x, y, z);
+            start += 1;
         }
     }
 
@@ -21,7 +21,7 @@ float *flatMesh(float width, float depth, int nx, int nz, float height) {
 }
 
 IndexedArray genWater(float width, float depth, int nx, int nz, float height) {
-    float *mesh = flatMesh(width, depth, nx, nz, height);
+    Vertex *mesh = flatMesh(width, depth, nx, nz, height);
 
     unsigned int indices[6 * (nx - 1) * (nz - 1)];
     int in = 0;

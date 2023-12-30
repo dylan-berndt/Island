@@ -29,6 +29,20 @@ Texture2D::Texture2D(const char* name, int t, int w, int h, int dtype) {
     unbind();
 }
 
+Texture2D::Texture2D(int num) {
+    self = num;
+    data = nullptr;
+
+    bind();
+
+    int w, h;
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &w);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &h);
+    width = w; height = h;
+
+    unbind();
+}
+
 void Texture2D::activate(int num) const {
     glActiveTexture(num);
     bind();

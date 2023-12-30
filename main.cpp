@@ -28,8 +28,8 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
 
-    int amount = 200;
-    IndexedArray water = genWater(100.0, 100.0, amount, amount, -1.0);
+    int amount = 100;
+    IndexedArray water = genWater(50.0, 50.0, amount, amount, -1.0);
 
     Vertex vertices[] = {
             Vertex(glm::vec3(-1.0, 1.0, 0.0), glm::vec2(0.0, 1.0)),
@@ -51,10 +51,10 @@ int main() {
     post_shader.openShader("../post.frag", GL_FRAGMENT_SHADER);
     post_shader.compile();
 
+    FrameBuffer buffer;
+
     Texture2D color_texture("", GL_RGB, WIDTH, HEIGHT);
     Texture2D depth_texture("", GL_DEPTH_COMPONENT, WIDTH, HEIGHT, GL_FLOAT);
-
-    FrameBuffer buffer;
 
     buffer.attachTexture2D(GL_COLOR_ATTACHMENT0, color_texture);
     buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, depth_texture);

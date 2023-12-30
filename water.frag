@@ -3,7 +3,7 @@ out vec4 FragColor;
 
 in vec3 FragPos;
 
-#define WATER_COLOR vec3(0.05, 0.2, 0.3)
+#define WATER_COLOR vec3(0.05, 0.1, 0.1)
 
 #define AMBIENT_LIGHT 0.6
 #define LIGHT_DIRECTION normalize(vec3(1.0, -0.1, 1.0))
