@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Texture2D::Texture2D(const char* name, int t, int w, int h, int dtype) {
+Texture2D::Texture2D(const char* name, int w, int h, int t, int dtype) {
     unsigned char *d = nullptr;
     int c;
     if (name != nullptr && name[0] != '\0') {
@@ -21,15 +21,17 @@ Texture2D::Texture2D(const char* name, int t, int w, int h, int dtype) {
 
     self = texture;
 
+    create(width, height, t, data);
+}
+
+void Texture2D::create(int w, int h, int t, void* d) {
     bind();
-
-    glTexImage2D(GL_TEXTURE_2D, 0, t, width, height, 0, t, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, t, w, h, 0, t, GL_UNSIGNED_BYTE, d);
     glGenerateMipmap(GL_TEXTURE_2D);
-
     unbind();
 }
 
-Texture2D::Texture2D(int num) {
+Texture2D::Texture2D(unsigned int num) {
     self = num;
     data = nullptr;
 
@@ -69,6 +71,12 @@ FrameBuffer::FrameBuffer() {
 void FrameBuffer::attachTexture2D(int attachment, Texture2D texture) const {
     bind();
     glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture.id(), 0);
+    unbind();
+}
+
+void FrameBuffer::detachTexture2D(int attachment) const {
+    bind();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, 0, 0);
     unbind();
 }
 

@@ -5,7 +5,14 @@ using namespace std;
 #define WIDTH (1920 / 2)
 #define HEIGHT (1080 / 2)
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+int bloomKernelSize = 4;
+
+int screen_width = WIDTH;
+int screen_height = HEIGHT;
+
+void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
+
+void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
 int main() {
     if (!glfwInit()) {
@@ -24,7 +31,8 @@ int main() {
     gladLoadGL();
 
     glViewport(0, 0, WIDTH, HEIGHT);
-    glfwSetFramebufferSizeCallback(win, framebuffer_size_callback);
+    glfwSetFramebufferSizeCallback(win, framebufferSizeCallback);
+    glfwSetKeyCallback(win, keyCallback);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -53,8 +61,8 @@ int main() {
 
     FrameBuffer buffer;
 
-    Texture2D color_texture("", GL_RGB, WIDTH, HEIGHT);
-    Texture2D depth_texture("", GL_DEPTH_COMPONENT, WIDTH, HEIGHT, GL_FLOAT);
+    Texture2D color_texture("", WIDTH, HEIGHT, GL_RGB);
+    Texture2D depth_texture("", WIDTH, HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT);
 
     buffer.attachTexture2D(GL_COLOR_ATTACHMENT0, color_texture);
     buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, depth_texture);
@@ -62,6 +70,7 @@ int main() {
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), float(WIDTH) / float(HEIGHT), 0.1f, 100.0f);
 
     while (!glfwWindowShouldClose(win)) {
+        glViewport(0, 0, WIDTH, HEIGHT);
         buffer.bind();
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -87,6 +96,7 @@ int main() {
 
         buffer.unbind();
 
+        glViewport(0, 0, screen_width, screen_height);
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -97,7 +107,8 @@ int main() {
 
         post_shader.setInt("depth", 0);
         post_shader.setInt("color", 1);
-        post_shader.setVec3("col", glm::vec3(0.0, 1.0, 0.0));
+
+        post_shader.setInt("kernelSize", bloomKernelSize);
 
         screen.draw();
 
@@ -118,7 +129,30 @@ int main() {
     return 0;
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    if (action == GLFW_PRESS) {
+        if (key == GLFW_KEY_ESCAPE) {
+            glfwSetWindowShouldClose(window, true);
+        }
+        if (mods & GLFW_MOD_CONTROL) {
+            if (key == GLFW_KEY_EQUAL) {
+                bloomKernelSize *= 2;
+                bloomKernelSize = bloomKernelSize > 16 ? 16 : bloomKernelSize;
+            }
+            if (key == GLFW_KEY_MINUS) {
+                if (bloomKernelSize > 1) {
+                    bloomKernelSize /= 2;
+                }
+                else {
+                    bloomKernelSize = 1;
+                }
+            }
+        }
+    }
+}
+
+void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
-    glViewport(0, 0, width, height);
+    screen_width = width;
+    screen_height = height;
 }

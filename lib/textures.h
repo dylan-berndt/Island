@@ -7,13 +7,14 @@
 class Texture2D {
 public:
     void activate(int num) const;
+    void create(int w, int h, int t = GL_RGBA, void* d = nullptr);
     void bind() const;
     static void unbind();
     int width;
     int height;
     unsigned int id() const {return self;};
-    explicit Texture2D(const char* name, int t = GL_RGBA, int w = 0, int h = 0, int dtype = GL_UNSIGNED_BYTE);
-    explicit Texture2D(int num);
+    explicit Texture2D(const char* name, int w = 0, int h = 0, int t = GL_RGBA, int dtype = GL_UNSIGNED_BYTE);
+    explicit Texture2D(unsigned int num);
 private:
     unsigned int self;
     unsigned char* data;
@@ -26,7 +27,9 @@ public:
     static void unbind();
     unsigned int id() const {return self;};
     void attachTexture2D(int attachment, Texture2D texture) const;
+    void detachTexture2D(int attachment) const;
     FrameBuffer();
+    explicit FrameBuffer(unsigned int num) {self = num;};
 private:
     unsigned int self;
 };

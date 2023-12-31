@@ -14,30 +14,30 @@ float fogDensity = 1.5;
 #define HIGH_FOG vec3(1.0, 0.8, 0.3) * 1.4
 #define LOW_FOG vec3(0.6, 0.8, 1.0) * 1.4
 
-float bloom_effect = 1.5;
-int kernel_size = 4;
-float size_multiplier = 2.0;
+float bloomEffect = 1.5;
+uniform int kernelSize = 4;
+float sizeMultiplier = 2.0;
 
 ivec2 textureSize = textureSize(color, 0);
 
 vec2 texelSize = 1.0 / vec2(textureSize);
 
 float gaussian(int x, int y) {
-    float coefficient = 1.0 / (2.0 * PI * pow(kernel_size, 0.5));
-    float exponent = -(x * x * y * y) / (2.0 * pow(kernel_size, 0.5));
+    float coefficient = 1.0 / (2.0 * PI * pow(kernelSize, 0.5));
+    float exponent = -(x * x * y * y) / (2.0 * pow(kernelSize, 0.5));
     return coefficient * exp(exponent);
 }
 
 vec3 bloom(vec3 original, vec2 position, sampler2D sampler) {
     vec3 bloom_add = vec3(0.0);
 
-    for (int x = -kernel_size / 2; x < kernel_size / 2; x++) {
-        for (int y = -kernel_size / 2; y < kernel_size / 2; y++) {
+    for (int x = -kernelSize / 2; x < kernelSize / 2; x++) {
+        for (int y = -kernelSize / 2; y < kernelSize / 2; y++) {
             if (x == 0 && y == 0) {
                 continue;
             }
 
-            vec2 sample_position = size_multiplier * vec2(x, y) * texelSize + position;
+            vec2 sample_position = sizeMultiplier * vec2(x, y) * texelSize + position;
             vec3 sample_col = texture(sampler, sample_position).xyz;
 
             float brightness = sample_col.x + sample_col.y + sample_col.z;
@@ -48,7 +48,7 @@ vec3 bloom(vec3 original, vec2 position, sampler2D sampler) {
             bloom_add += gauss * bloom_mult * sample_col;
         }
     }
-    return original + bloom_add * bloom_effect;
+    return original + bloom_add * bloomEffect;
 }
 
 vec3 fog(float depthValue, vec3 original) {
