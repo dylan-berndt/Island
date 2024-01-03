@@ -67,6 +67,11 @@ void ShaderProgram::compile() const {
 
 void ShaderProgram::use() const {
     glUseProgram(self);
+
+    setMat4("projection", ShaderProgram::perspective);
+    setMat4("view", ShaderProgram::view);
+    setVec3("camera", ShaderProgram::camera);
+    setFloat("time", float(glfwGetTime()));
 }
 
 void ShaderProgram::stop() const {

@@ -7,6 +7,11 @@
 
 class ShaderProgram {
 public:
+    static glm::mat4 perspective;
+    static glm::mat4 view;
+
+    static glm::vec3 camera;
+
     void openShader(const std::string& name, int type) const;
     void compile() const;
     void use() const;

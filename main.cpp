@@ -10,6 +10,10 @@ int bloomKernelSize = 4;
 int screen_width = WIDTH;
 int screen_height = HEIGHT;
 
+glm::mat4 ShaderProgram::perspective;
+glm::mat4 ShaderProgram::view;
+glm::vec3 ShaderProgram::camera;
+
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
@@ -37,17 +41,21 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     int amount = 100;
-    IndexedArray water = genWater(50.0, 50.0, amount, amount, -1.0);
 
-    Vertex vertices[] = {
+    Mesh water = flatMesh(amount, amount);
+    water.model = glm::translate(water.model, glm::vec3(0.0, -1.0, 0.0));
+    water.model = glm::scale(water.model, glm::vec3(50.0, 1.0, 50.0));
+
+    vector<Vertex> vertices = {
             Vertex(glm::vec3(-1.0, 1.0, 0.0), glm::vec2(0.0, 1.0)),
             Vertex(glm::vec3(1.0, 1.0, 0.0), glm::vec2(1.0, 1.0)),
             Vertex(glm::vec3(-1.0, -1.0, 0.0), glm::vec2(0.0, 0.0)),
-            Vertex(glm::vec3(1.0, 1.0, 0.0), glm::vec2(1.0, 1.0)),
-            Vertex(glm::vec3(1.0, -1.0, 0.0), glm::vec2(1.0, 0.0)),
-            Vertex(glm::vec3(-1.0, -1.0, 0.0), glm::vec2(0.0, 0.0))
+            Vertex(glm::vec3(1.0, -1.0, 0.0), glm::vec2(1.0, 0.0))
     };
-    VertexArray screen(vertices, 6);
+
+    vector<int> indices = {0, 1, 2, 1, 3, 2};
+
+    Mesh screen(vertices, indices, vector<Texture2D>());
 
     ShaderProgram water_shader;
     water_shader.openShader("../water.vert", GL_VERTEX_SHADER);
@@ -67,9 +75,16 @@ int main() {
     buffer.attachTexture2D(GL_COLOR_ATTACHMENT0, color_texture);
     buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, depth_texture);
 
-    glm::mat4 projection = glm::perspective(glm::radians(45.0f), float(WIDTH) / float(HEIGHT), 0.1f, 100.0f);
+    ShaderProgram::perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / float(HEIGHT), 0.1f, 100.0f);
+    ShaderProgram::camera = glm::vec3(0.0, 2.0, 0.0);
 
     while (!glfwWindowShouldClose(win)) {
+        glm::mat4 identity(1.0);
+
+        glm::mat4 view = glm::translate(identity, -ShaderProgram::camera);
+        view = glm::rotate(view, glm::radians(15.0f), glm::vec3(1.0, 0.0, 0.0));
+        ShaderProgram::view = glm::rotate(view, float(glm::radians(glfwGetTime() * 10.0f)), glm::vec3(0.0, 1.0, 0.0));
+
         glViewport(0, 0, WIDTH, HEIGHT);
         buffer.bind();
 
@@ -78,19 +93,7 @@ int main() {
 
         water_shader.use();
 
-        glm::mat4 identity(1.0);
-
-        glm::mat4 view = glm::rotate(identity, glm::radians(15.0f), glm::vec3(1.0, 0.0, 0.0));
-        view = glm::rotate(view, float(glm::radians(glfwGetTime() * 10.0f)), glm::vec3(0.0, 1.0, 0.0));
-
-        water_shader.setMat4("projection", projection);
-        water_shader.setMat4("view", view);
-        water_shader.setMat4("model", glm::translate(identity, glm::vec3(0.0, -2.0, 0.0)));
-        water_shader.setVec3("camera", glm::vec3(0.0, 2.0, 0.0));
-
-        water_shader.setFloat("time", float(glfwGetTime()));
-
-        water.draw();
+        water.draw(water_shader);
 
         water_shader.stop();
 
