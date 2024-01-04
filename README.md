@@ -2,6 +2,11 @@
 
 This is a water rendering project I have been working on to learn OpenGL and create a framework I can use for other graphics programming projects.
 
+## 1/3/23
+
+No major visual changes, but transition from direct use of Vertex Array Objects to a Mesh approach. Also standardized shader uniforms such as projection and view. About to begin development
+implementing Models and model loading.
+
 ## 12/29/23
 
 Framebuffers implemented, Vertex Array Objects made more flexible, some adjustments to the effects. 
