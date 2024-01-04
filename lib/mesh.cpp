@@ -23,14 +23,6 @@ void Mesh::draw(ShaderProgram &shader) {
     glBindVertexArray(0);
 }
 
-void Mesh::draw() {
-    glBindVertexArray(VAO);
-
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-
-    glBindVertexArray(0);
-}
-
 void Mesh::setupMesh() {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);

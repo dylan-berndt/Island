@@ -41,7 +41,6 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     int amount = 100;
-
     Mesh water = flatMesh(amount, amount);
     water.model = glm::translate(water.model, glm::vec3(0.0, -1.0, 0.0));
     water.model = glm::scale(water.model, glm::vec3(50.0, 1.0, 50.0));
@@ -66,6 +65,13 @@ int main() {
     post_shader.openShader("../post.vert", GL_VERTEX_SHADER);
     post_shader.openShader("../post.frag", GL_FRAGMENT_SHADER);
     post_shader.compile();
+
+    ShaderProgram default_shader;
+    default_shader.openShader("../default.vert", GL_VERTEX_SHADER);
+    default_shader.openShader("../default.frag", GL_FRAGMENT_SHADER);
+    default_shader.compile();
+
+    Model island("../Island/island.obj");
 
     FrameBuffer buffer;
 
@@ -97,6 +103,12 @@ int main() {
 
         water_shader.stop();
 
+        default_shader.use();
+
+        island.draw(default_shader);
+
+        default_shader.stop();
+
         buffer.unbind();
 
         glViewport(0, 0, screen_width, screen_height);
@@ -113,7 +125,7 @@ int main() {
 
         post_shader.setInt("kernelSize", bloomKernelSize);
 
-        screen.draw();
+        screen.draw(post_shader);
 
         post_shader.stop();
 

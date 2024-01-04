@@ -4,9 +4,6 @@
 #define PIPE_PIPE_H
 
 #include "back.h"
-#include "mesh.h"
-
-Vertex* flatMesh(float width, float depth, int nx, int nz, float height);
-IndexedArray genWater(float width, float depth, int nx, int nz, float height);
+#include "model.h"
 
 #endif //PIPE_PIPE_H
