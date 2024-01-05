@@ -1,11 +1,23 @@
 # Water Demo
 
-This is a water rendering project I have been working on to learn OpenGL and create a framework I can use for other graphics programming projects.
+This is a water rendering project I have been working on to learn OpenGL and create a framework I can use for 
+other graphics programming projects.
+
+## 1/4/23 
+
+Began implementing Model loading. I couldn't get Assimp to build correctly at any point over the past entire day, 
+so I'm making my own system. It currently only works with simple triangular meshes in .obj files, but I expect
+to expand it very soon. 
+
+A sample island exported from Blender rendered with the first iteration of the default shader:
+
+![Screenshot (263)](https://github.com/dylan-berndt/Water-Demo/assets/33700799/98ffe87b-de58-43fc-8d6a-488e0c9012c1)
+![Screenshot (264)](https://github.com/dylan-berndt/Water-Demo/assets/33700799/ddafdd8d-45bb-4b13-81c2-430122414928)
 
 ## 1/3/23
 
-No major visual changes, but transition from direct use of Vertex Array Objects to a Mesh approach. Also standardized shader uniforms such as projection and view. About to begin development
-implementing Models and model loading.
+No major visual changes, but transition from direct use of Vertex Array Objects to a Mesh approach. Also standardized 
+shader uniforms such as projection and view. About to begin development implementing Models and model loading.
 
 ## 12/29/23
 
