@@ -7,15 +7,15 @@
 class Texture2D {
 public:
     void activate(int num) const;
-    void create(int w, int h, int t = GL_RGBA, void* d = nullptr);
+    void create(int w, int h, int t = GL_RGB, unsigned char* d = nullptr);
     void bind() const;
     static void unbind();
     int width;
     int height;
     unsigned int id() const {return self;};
-    explicit Texture2D(const char* name, int w = 0, int h = 0, int t = GL_RGBA, int dtype = GL_UNSIGNED_BYTE);
+    explicit Texture2D(const char* name, int w = 0, int h = 0, int t = GL_RGB, int dtype = GL_UNSIGNED_BYTE);
     explicit Texture2D(unsigned int num);
-    Texture2D() {};
+    Texture2D() {width = 0; height = 0; self = 0; data = nullptr;};
 
     std::string type;
     std::string path;

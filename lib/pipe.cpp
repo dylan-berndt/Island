@@ -15,7 +15,7 @@ void Camera::rotateByMouse(double dx, double dy) {
     yaw += dx * 0.1;
     pitch += dy * 0.1;
 
-    pitch = glm::clamp(pitch, -69.0f, 69.0f);
+    pitch = glm::clamp(pitch, -79.0f, 79.0f);
 
     getRotation();
 }

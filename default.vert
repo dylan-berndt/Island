@@ -17,9 +17,9 @@ void main() {
     vec4 worldPos = model * vec4(aPos, 1.0);
     FragPos = vec3(worldPos);
 
-    Normal = aNormal;
-
     TexCoords = texCoord;
+
+    Normal = normalize(vec3(model * vec4(aNormal, 1.0)));
 
     gl_Position = projection * view * model * vec4(aPos, 1.0);
 }

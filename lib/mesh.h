@@ -11,8 +11,8 @@ public:
     Vertex() {
         position = glm::vec3(0.0); normal = glm::vec3(0.0); texCoord = glm::vec2(0.0);
     }
-    Vertex(glm::vec3 p, glm::vec3 c = glm::vec3(0.0), glm::vec2 t = glm::vec2(0.0)) {
-        position = p; normal = c; texCoord = t;
+    Vertex(glm::vec3 p, glm::vec3 n = glm::vec3(0.0), glm::vec2 t = glm::vec2(0.0)) {
+        position = p; normal = n; texCoord = t;
     }
     Vertex(glm::vec3 p, glm::vec2 t) {
         position = p; normal = glm::vec3(0.0); texCoord = t;
@@ -28,15 +28,15 @@ public:
 
 class Material {
 public:
-    glm::vec3 baseColor;
-    glm::vec3 specularColor;
-    glm::vec3 emissiveColor;
+    glm::vec3 baseColor = glm::vec3(1.0, 0.0, 1.0);
+    glm::vec3 specularColor = glm::vec3(1.0, 0.0, 1.0);
+    glm::vec3 emissiveColor = glm::vec3(1.0, 0.0, 1.0);
 
-    float roughness;
-    float glossiness;
-    float metallic;
-    float opacity;
-    float transparency;
+    float roughness = 0.0f;
+    float glossiness = 0.0f;
+    float metallic = 0.0f;
+    float opacity = 0.0f;
+    float transparency = 0.0f;
 
     Texture2D opacityTexture;
     Texture2D normalTexture;

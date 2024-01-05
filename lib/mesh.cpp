@@ -14,9 +14,16 @@ Mesh::Mesh(vector<Vertex> v, vector<int> i, vector<Texture2D> t) {
 }
 
 void Mesh::draw(ShaderProgram &shader) {
-    glBindVertexArray(VAO);
+    if (material.baseTexture.width != 0) {
+        material.baseTexture.activate(GL_TEXTURE0);
+        shader.setInt("baseTexture", 0);
+    }
 
     shader.setMat4("model", model);
+
+    shader.setVec3("baseColor", material.baseColor);
+
+    glBindVertexArray(VAO);
 
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 

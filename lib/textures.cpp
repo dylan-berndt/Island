@@ -3,18 +3,26 @@
 #include "back.h"
 #include "textures.h"
 
+#include "stb_image.h"
+
 using namespace std;
 
 Texture2D::Texture2D(const char* name, int w, int h, int t, int dtype) {
-    unsigned char *d = nullptr;
     int c;
+    data = nullptr;
+
+    stbi_set_flip_vertically_on_load(true);
     if (name != nullptr && name[0] != '\0') {
-        d = stbi_load(name, &w, &h, &c, 0);
+        unsigned char *d = stbi_load(name, &w, &h, &c, 0);
+        data = d;
+
+        if(stbi_failure_reason()) {
+            std::cout << "ERROR::TEXTURE " << name << " " << stbi_failure_reason() << endl;
+        }
     }
 
     width = w;
     height = h;
-    data = d;
 
     unsigned int texture;
     glGenTextures(1, &texture);
@@ -24,10 +32,12 @@ Texture2D::Texture2D(const char* name, int w, int h, int t, int dtype) {
     create(width, height, t, data);
 }
 
-void Texture2D::create(int w, int h, int t, void* d) {
+void Texture2D::create(int w, int h, int t, unsigned char* d) {
     bind();
+
     glTexImage2D(GL_TEXTURE_2D, 0, t, w, h, 0, t, GL_UNSIGNED_BYTE, d);
     glGenerateMipmap(GL_TEXTURE_2D);
+
     unbind();
 }
 

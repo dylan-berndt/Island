@@ -11,13 +11,14 @@ class Model {
 public:
     Model(std::string path) {loadModel(path);}
     void draw(ShaderProgram &shader);
-private:
+
     std::vector<Mesh> meshes;
+
+private:
     std::string directory;
 
     void loadModel(std::string path);
-    Material loadMaterial(std::string path);
-    std::vector<Texture2D> loadMaterialTextures(Material *mat, std::string typeName);
+    Material loadMaterial(std::string file, std::string &name);
 };
 
 #endif //PIPE_MODEL_H

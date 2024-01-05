@@ -52,7 +52,7 @@ vec3 bloom(vec3 original, vec2 position, sampler2D sampler) {
 }
 
 vec3 fog(float depthValue, vec3 original) {
-    float spread = 200.0;
+    float spread = 300.0;
     float depthSpread = 1.0 - (depthValue - (1.0 - (1.0 / spread))) * spread;
     depthSpread = max(0.0, min(1.0, depthSpread));
 

@@ -3,11 +3,18 @@
 
 using namespace std;
 
+struct FaceVertex {
+    int vIndex;
+    int tIndex;
+    int nIndex;
+};
+
 void Model::loadModel(string path) {
-    directory = path;
+    directory = path.substr(0, path.find_last_of('/')) + "/";
 
     ifstream infile(path);
     if (!infile) {
+        cout << "ERROR::MODEL Couldn't find " << path << endl;
         return;
     }
 
@@ -20,7 +27,12 @@ void Model::loadModel(string path) {
     vector<int> indices;
     vector<Texture2D> textures;
 
-    Material material;
+    map<string, Material> materials;
+    Material currentMaterial;
+
+    int vOffset = 0;
+    int tOffset = 0;
+    int nOffset = 0;
 
     string line;
     while (getline(infile, line)) {
@@ -30,7 +42,13 @@ void Model::loadModel(string path) {
 
         if (type == "o") {
             if (!vertices.empty()) {
-                meshes.emplace_back(vertices, indices, textures);
+                Mesh newMesh(vertices, indices, textures);
+                newMesh.material = currentMaterial;
+                meshes.push_back(newMesh);
+
+                vOffset = vertices.size();
+                tOffset = texCoords.size();
+                nOffset = normals.size();
 
                 positions.clear();
                 normals.clear();
@@ -46,6 +64,16 @@ void Model::loadModel(string path) {
             string materialPath;
             iss >> materialPath;
 
+            string name;
+            Material newMaterial = loadMaterial(materialPath, name);
+
+            materials.insert({name, newMaterial});
+        }
+        else if (type == "usemtl") {
+            string materialName;
+            iss >> materialName;
+
+            currentMaterial = materials[materialName];
         }
 
         else if (type == "v") {
@@ -67,59 +95,130 @@ void Model::loadModel(string path) {
 
         else if (type == "f") {
             string section;
-            while (iss >> section) {
+            vector<FaceVertex> faceData;
 
+            while (iss >> section) {
                 istringstream sss(section);
                 string current;
                 int n = 0;
+
+                int vIndex;
+                int tIndex;
+                int nIndex;
 
                 while (getline(sss, current, '/')) {
                     int index = stoi(current);
                     switch (n) {
                         case 0:
-                            indices.push_back(index - 1);
+                            vIndex = (index - 1) - vOffset;
                             break;
                         case 1:
-                            vertices[indices.back()].texCoord = texCoords[index - 1];
+                            tIndex = (index - 1) - tOffset;
                             break;
                         case 2:
-                            vertices[indices.back()].normal = normals[index - 1];
+                            nIndex = (index - 1) - nOffset;
                             break;
                     }
                     n++;
+                }
+
+                faceData.push_back(FaceVertex{vIndex, tIndex, nIndex});
+            }
+
+            if (faceData.size() == 3) {
+                for (int t = 0; t < 3; t++) {
+                    indices.push_back(faceData[t].vIndex);
+                    vertices[indices.back()].texCoord = texCoords[faceData[t].tIndex];
+                    vertices[indices.back()].normal = normals[faceData[t].nIndex];
+                }
+            }
+            else {
+                // I have cheated and I am not sorry at all
+
+                glm::vec3 averagePosition = glm::vec3(0.0);
+                glm::vec3 averageNormal = glm::vec3(0.0);
+                glm::vec2 averageTexCoord = glm::vec3(0.0);
+
+                for (int t = 0; t < 4; t++) {
+                    averagePosition += positions[faceData[t].vIndex] * 0.25f;
+                    averageNormal += normals[faceData[t].nIndex] * 0.25f;
+                    averageTexCoord += texCoords[faceData[t].tIndex] * 0.25f;
+                }
+
+                Vertex center(averagePosition, averageNormal, averageTexCoord);
+                vertices.push_back(center);
+
+                for (int t = 0; t < 4; t++) {
+                    int next = (t + 1) % 4;
+                    indices.push_back(faceData[t].vIndex);
+                    vertices[indices.back()].texCoord = texCoords[faceData[t].tIndex];
+                    vertices[indices.back()].normal = normals[faceData[t].nIndex];
+
+                    indices.push_back(faceData[next].vIndex);
+                    vertices[indices.back()].texCoord = texCoords[faceData[next].tIndex];
+                    vertices[indices.back()].normal = normals[faceData[next].nIndex];
+
+                    indices.push_back(vertices.size() - 1);
                 }
             }
         }
     }
 
     if (!vertices.empty()) {
-        Mesh created(vertices, indices, textures);
-        created.model = glm::scale(glm::mat4(1.0), glm::vec3(0.25, 1.0, 0.25));
-        meshes.emplace_back(created);
+        Mesh newMesh(vertices, indices, textures);
+        newMesh.material = currentMaterial;
+        meshes.push_back(newMesh);
     }
+
+    infile.close();
 }
 
-Material Model::loadMaterial(string path) {
-    ifstream infile(path);
+Material Model::loadMaterial(string file, string &name) {
+    Material mat;
+
+    ifstream infile(directory + file);
+    if (!infile) {
+        cout << "ERROR::MATERIAL Couldn't find " << directory + file << endl;
+        return mat;
+    }
+
     string line;
-    while (infile >> line) {
-        cout << line << endl;
-    }
-}
 
-vector<Texture2D> Model::loadMaterialTextures(Material *mat, string typeName) {
-//    vector<Texture2D> textures;
-//    for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
-//    {
-//        aiString str;
-//        mat->GetTexture(type, i, &str);
-//        cout << str.C_Str() << endl;
-//        Texture2D texture(str.C_Str());
-//        texture.type = typeName;
-//        texture.path = str.C_Str();
-//        textures.push_back(texture);
-//    }
-//    return textures;
+    while (getline(infile, line)) {
+        istringstream iss(line);
+        string type;
+        iss >> type;
+
+        if (type == "Kd") {
+            float x, y, z;
+            iss >> x >> y >> z;
+            mat.baseColor = glm::vec3(x, y, z);
+        }
+        else if (type == "Ka") {
+            float x, y, z;
+            iss >> x >> y >> z;
+            mat.specularColor = glm::vec3(x, y, z);
+        }
+        else if (type == "Ke") {
+            float x, y, z;
+            iss >> x >> y >> z;
+            mat.emissiveColor = glm::vec3(x, y, z);
+        }
+
+        else if (type == "map_Kd") {
+            string textureName;
+            iss >> textureName;
+
+            Texture2D baseTexture((directory + textureName).c_str());
+            mat.baseTexture = baseTexture;
+        }
+
+        else if (type == "newmtl") {
+            iss >> name;
+        }
+    }
+
+    return mat;
 }
 
 void Model::draw(ShaderProgram &shader) {

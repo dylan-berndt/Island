@@ -10,11 +10,14 @@ int bloomKernelSize = 4;
 int screen_width = WIDTH;
 int screen_height = HEIGHT;
 
-glm::mat4 ShaderProgram::perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / float(HEIGHT), 0.1f, 100.0f);
-glm::mat4 ShaderProgram::view;
-glm::vec3 ShaderProgram::camera(0.0, 4.0, 0.0);
+float delta = 0;
+double last_time = 0;
 
-Camera World::camera(glm::vec3(0.0, 4.0, 0.0), 0, 0, 0);
+glm::mat4 ShaderProgram::perspective = glm::perspective(glm::radians(70.0f), float(WIDTH) / float(HEIGHT), 0.1f, 500.0f);
+glm::mat4 ShaderProgram::view;
+glm::vec3 ShaderProgram::camera;
+
+Camera World::camera(glm::vec3(0.0, 4.0, 20.0), 0, 0, 0);
 
 void cursorPosCallback(GLFWwindow *window, double xpos, double ypos);
 
@@ -48,10 +51,10 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
 
-    int amount = 100;
+    int amount = 200;
     Mesh water = flatMesh(amount, amount);
-    water.model = glm::translate(water.model, glm::vec3(0.0, -1.0, 0.0));
-    water.model = glm::scale(water.model, glm::vec3(50.0, 1.0, 50.0));
+    water.model = glm::translate(water.model, glm::vec3(0.0, -2.25, 0.0));
+    water.model = glm::scale(water.model, glm::vec3(200.0, 1.0, 200.0));
 
     vector<Vertex> vertices = {
             Vertex(glm::vec3(-1.0, 1.0, 0.0), glm::vec2(0.0, 1.0)),
@@ -79,7 +82,8 @@ int main() {
     default_shader.openShader("../default.frag", GL_FRAGMENT_SHADER);
     default_shader.compile();
 
-    Model island("../Island/island.obj");
+//    Model island("../Island/island.obj");
+    Model crab("../Island/10012_crab_v2_iterations-1.obj");
 
     FrameBuffer buffer;
 
@@ -90,14 +94,17 @@ int main() {
     buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, depth_texture);
 
     while (!glfwWindowShouldClose(win)) {
-//        glm::mat4 identity(1.0);
-
-//        glm::mat4 view = glm::translate(identity, -ShaderProgram::camera);
-//        view = glm::rotate(view, glm::radians(30.0f), glm::vec3(1.0, 0.0, 0.0));
-//        ShaderProgram::view = glm::rotate(view, float(glm::radians(glfwGetTime() * 10.0f)), glm::vec3(0.0, 1.0, 0.0));
+        delta = glfwGetTime() - last_time;
+//        cout << 1.0 / delta << endl;
+        last_time = glfwGetTime();
 
         ShaderProgram::camera = World::camera.position;
         ShaderProgram::view = World::camera.getView();
+
+        glm::mat4 crabModel = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 2.0, 0.0));
+        crabModel = glm::rotate(crabModel, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+        crabModel = glm::rotate(crabModel, glm::radians(float(glfwGetTime() * 20.0)), glm::vec3(0.0, 0.0, 1.0));
+        crab.meshes[0].model = crabModel;
 
         glViewport(0, 0, WIDTH, HEIGHT);
         buffer.bind();
@@ -113,7 +120,8 @@ int main() {
 
         default_shader.use();
 
-        island.draw(default_shader);
+//        island.draw(default_shader);
+        crab.draw(default_shader);
 
         default_shader.stop();
 
@@ -165,37 +173,53 @@ void cursorPosCallback(GLFWwindow *window, double xpos, double ypos) {
     my = ypos;
 }
 
-float cameraSpeed = 0.2;
+float cameraSpeed = 10.0;
 
 void keyPress(GLFWwindow *window) {
+    glm::vec3 groundAlignedForward = World::camera.forward;
+    groundAlignedForward.y = 0.0;
+    groundAlignedForward = glm::normalize(groundAlignedForward);
+
+    glm::vec3 movement(0.0);
+
     int state = glfwGetKey(window, GLFW_KEY_W);
     if (state == GLFW_PRESS) {
-        World::camera.position += World::camera.forward * cameraSpeed;
+        movement += groundAlignedForward;
     }
 
     state = glfwGetKey(window, GLFW_KEY_S);
     if (state == GLFW_PRESS) {
-        World::camera.position -= World::camera.forward * cameraSpeed;
+        movement -= groundAlignedForward;
     }
 
     state = glfwGetKey(window, GLFW_KEY_D);
     if (state == GLFW_PRESS) {
-        World::camera.position += World::camera.right * cameraSpeed;
+        movement += World::camera.right;
     }
 
     state = glfwGetKey(window, GLFW_KEY_A);
     if (state == GLFW_PRESS) {
-        World::camera.position -= World::camera.right * cameraSpeed;
+        movement -= World::camera.right;
     }
 
     state = glfwGetKey(window, GLFW_KEY_SPACE);
     if (state == GLFW_PRESS) {
-        World::camera.position += glm::vec3(0.0, 1.0, 0.0) * cameraSpeed;
+        movement += glm::vec3(0.0, 1.0, 0.0);
     }
 
+    state = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL);
+    if (state == GLFW_PRESS) {
+        movement -= glm::vec3(0.0, 1.0, 0.0);
+    }
+
+    float speed = cameraSpeed;
     state = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
     if (state == GLFW_PRESS) {
-        World::camera.position -= glm::vec3(0.0, 1.0, 0.0) * cameraSpeed;
+        speed *= 2.0;
+    }
+
+    if (movement.x != 0.0 || movement.y != 0.0 || movement.z != 0.0) {
+        World::camera.position += glm::normalize(movement) * speed * delta;
     }
 }
 
