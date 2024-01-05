@@ -10,10 +10,15 @@ int bloomKernelSize = 4;
 int screen_width = WIDTH;
 int screen_height = HEIGHT;
 
-glm::mat4 ShaderProgram::perspective;
+glm::mat4 ShaderProgram::perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / float(HEIGHT), 0.1f, 100.0f);
 glm::mat4 ShaderProgram::view;
-glm::vec3 ShaderProgram::camera;
+glm::vec3 ShaderProgram::camera(0.0, 4.0, 0.0);
 
+Camera World::camera(glm::vec3(0.0, 4.0, 0.0), 0, 0, 0);
+
+void cursorPosCallback(GLFWwindow *window, double xpos, double ypos);
+
+void keyPress(GLFWwindow *window);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
@@ -35,8 +40,11 @@ int main() {
     gladLoadGL();
 
     glViewport(0, 0, WIDTH, HEIGHT);
+
     glfwSetFramebufferSizeCallback(win, framebufferSizeCallback);
     glfwSetKeyCallback(win, keyCallback);
+    glfwSetCursorPosCallback(win, cursorPosCallback);
+    glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -81,15 +89,15 @@ int main() {
     buffer.attachTexture2D(GL_COLOR_ATTACHMENT0, color_texture);
     buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, depth_texture);
 
-    ShaderProgram::perspective = glm::perspective(glm::radians(45.0f), float(WIDTH) / float(HEIGHT), 0.1f, 100.0f);
-    ShaderProgram::camera = glm::vec3(0.0, 2.0, 0.0);
-
     while (!glfwWindowShouldClose(win)) {
-        glm::mat4 identity(1.0);
+//        glm::mat4 identity(1.0);
 
-        glm::mat4 view = glm::translate(identity, -ShaderProgram::camera);
-        view = glm::rotate(view, glm::radians(15.0f), glm::vec3(1.0, 0.0, 0.0));
-        ShaderProgram::view = glm::rotate(view, float(glm::radians(glfwGetTime() * 10.0f)), glm::vec3(0.0, 1.0, 0.0));
+//        glm::mat4 view = glm::translate(identity, -ShaderProgram::camera);
+//        view = glm::rotate(view, glm::radians(30.0f), glm::vec3(1.0, 0.0, 0.0));
+//        ShaderProgram::view = glm::rotate(view, float(glm::radians(glfwGetTime() * 10.0f)), glm::vec3(0.0, 1.0, 0.0));
+
+        ShaderProgram::camera = World::camera.position;
+        ShaderProgram::view = World::camera.getView();
 
         glViewport(0, 0, WIDTH, HEIGHT);
         buffer.bind();
@@ -135,6 +143,8 @@ int main() {
         }
 
         glfwPollEvents();
+        keyPress(win);
+
         glfwSwapBuffers(win);
     }
 
@@ -144,10 +154,62 @@ int main() {
     return 0;
 }
 
+bool focused = true;
+double mx, my = 0;
+
+void cursorPosCallback(GLFWwindow *window, double xpos, double ypos) {
+    if (focused && !(mx == 0 && my == 0)) {
+        World::camera.rotateByMouse(xpos - mx, ypos - my);
+    }
+    mx = xpos;
+    my = ypos;
+}
+
+float cameraSpeed = 0.2;
+
+void keyPress(GLFWwindow *window) {
+    int state = glfwGetKey(window, GLFW_KEY_W);
+    if (state == GLFW_PRESS) {
+        World::camera.position += World::camera.forward * cameraSpeed;
+    }
+
+    state = glfwGetKey(window, GLFW_KEY_S);
+    if (state == GLFW_PRESS) {
+        World::camera.position -= World::camera.forward * cameraSpeed;
+    }
+
+    state = glfwGetKey(window, GLFW_KEY_D);
+    if (state == GLFW_PRESS) {
+        World::camera.position += World::camera.right * cameraSpeed;
+    }
+
+    state = glfwGetKey(window, GLFW_KEY_A);
+    if (state == GLFW_PRESS) {
+        World::camera.position -= World::camera.right * cameraSpeed;
+    }
+
+    state = glfwGetKey(window, GLFW_KEY_SPACE);
+    if (state == GLFW_PRESS) {
+        World::camera.position += glm::vec3(0.0, 1.0, 0.0) * cameraSpeed;
+    }
+
+    state = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
+    if (state == GLFW_PRESS) {
+        World::camera.position -= glm::vec3(0.0, 1.0, 0.0) * cameraSpeed;
+    }
+}
+
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS) {
         if (key == GLFW_KEY_ESCAPE) {
-            glfwSetWindowShouldClose(window, true);
+            if (focused) {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                focused = false;
+            }
+            else {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                focused = true;
+            }
         }
         if (mods & GLFW_MOD_CONTROL) {
             if (key == GLFW_KEY_EQUAL) {
@@ -162,6 +224,9 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
                     bloomKernelSize = 1;
                 }
             }
+        }
+        else {
+
         }
     }
 }

@@ -26,6 +26,31 @@ public:
     glm::vec3 color = glm::vec3(0, 0, 0);
 };
 
+class Material {
+public:
+    glm::vec3 baseColor;
+    glm::vec3 specularColor;
+    glm::vec3 emissiveColor;
+
+    float roughness;
+    float glossiness;
+    float metallic;
+    float opacity;
+    float transparency;
+
+    Texture2D opacityTexture;
+    Texture2D normalTexture;
+    Texture2D emissiveTexture;
+    Texture2D ambientOcclusionTexture;
+    Texture2D metallicTexture;
+    Texture2D glossinessTexture;
+    Texture2D roughnessTexture;
+    Texture2D baseTexture;
+    Texture2D specularTexture;
+
+    Material() {};
+};
+
 class Mesh {
 public:
     std::vector<Vertex> vertices;
@@ -33,6 +58,8 @@ public:
     std::vector<Texture2D> textures;
 
     glm::mat4 model;
+
+    Material material;
 
     Mesh(std::vector<Vertex>, std::vector<int>, std::vector<Texture2D>);
     void draw(ShaderProgram&);

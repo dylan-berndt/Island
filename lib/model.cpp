@@ -73,17 +73,17 @@ void Model::loadModel(string path) {
                 string current;
                 int n = 0;
 
-                while (getline(sss, current, '/') && n < 3) {
+                while (getline(sss, current, '/')) {
                     int index = stoi(current);
                     switch (n) {
                         case 0:
                             indices.push_back(index - 1);
                             break;
                         case 1:
-//                            vertices[indices[-1]].texCoord = texCoords[index - 1];
+                            vertices[indices.back()].texCoord = texCoords[index - 1];
                             break;
                         case 2:
-//                            vertices[indices[-1]].normal = normals[index - 1];
+                            vertices[indices.back()].normal = normals[index - 1];
                             break;
                     }
                     n++;
@@ -94,10 +94,9 @@ void Model::loadModel(string path) {
 
     if (!vertices.empty()) {
         Mesh created(vertices, indices, textures);
-        created.model = glm::translate(glm::mat4(1.0), glm::vec3(0, -1.0, 0));
+        created.model = glm::scale(glm::mat4(1.0), glm::vec3(0.25, 1.0, 0.25));
         meshes.emplace_back(created);
     }
-    cout << meshes.size() << endl;
 }
 
 Material Model::loadMaterial(string path) {
