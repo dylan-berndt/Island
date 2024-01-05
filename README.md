@@ -14,6 +14,10 @@ A sample island exported from Blender rendered with the first iteration of the d
 ![Screenshot (263)](https://github.com/dylan-berndt/Water-Demo/assets/33700799/98ffe87b-de58-43fc-8d6a-488e0c9012c1)
 ![Screenshot (264)](https://github.com/dylan-berndt/Water-Demo/assets/33700799/ddafdd8d-45bb-4b13-81c2-430122414928)
 
+More in-depth model loading and camera controls:
+
+![ezgif com-video-to-gif-converter](https://github.com/dylan-berndt/Water-Demo/assets/33700799/9c159a61-d235-4023-bf32-49d8aed80a6c)
+
 ## 1/3/23
 
 No major visual changes, but transition from direct use of Vertex Array Objects to a Mesh approach. Also standardized 
