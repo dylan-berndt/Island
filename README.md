@@ -1,6 +1,6 @@
 # Water Demo
 
-This is a water rendering project I have been working on to learn OpenGL and create a framework I can use for 
+This is an ocean scene rendering project I have been working on to learn OpenGL and create a framework I can use for 
 other graphics programming projects.
 
 ## 1/5/23
