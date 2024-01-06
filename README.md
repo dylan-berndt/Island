@@ -1,7 +1,14 @@
 # Water Demo
 
-This is a water rendering project I have been working on to learn OpenGL and create a framework I can use for 
+This is an ocean scene rendering project I have been working on to learn OpenGL and create a framework I can use for 
 other graphics programming projects.
+
+## 1/5/23
+
+Model loading is more fleshed out now, can load base, specular, and emissive colors along with a base texture.
+Next to implement is the rest of Materials, including normal maps and others.
+
+![ezgif-3-6a1c98eb79](https://github.com/dylan-berndt/Water-Demo/assets/33700799/bb6b71af-9942-4de0-b9dd-8a5b5faf05aa)
 
 ## 1/4/23 
 
