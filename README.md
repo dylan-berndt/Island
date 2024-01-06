@@ -3,6 +3,10 @@
 This is an ocean scene rendering project I have been working on to learn OpenGL and create a framework I can use for 
 other graphics programming projects.
 
+## 1/6/23
+
+![ezgif-4-c6e04d1e42](https://github.com/dylan-berndt/Water-Demo/assets/33700799/20af5d23-70f3-42de-a6bd-92144ed7da6d)
+
 ## 1/5/23
 
 Model loading is more fleshed out now, can load base, specular, and emissive colors along with a base texture.
