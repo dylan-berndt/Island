@@ -218,6 +218,8 @@ Material Model::loadMaterial(string file, string &name) {
         }
     }
 
+    infile.close();
+
     return mat;
 }
 

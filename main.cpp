@@ -53,7 +53,7 @@ int main() {
 
     int amount = 200;
     Mesh water = flatMesh(amount, amount);
-    water.model = glm::translate(water.model, glm::vec3(0.0, -2.25, 0.0));
+    water.model = glm::translate(water.model, glm::vec3(0.0, 0.0, 0.0));
     water.model = glm::scale(water.model, glm::vec3(200.0, 1.0, 200.0));
 
     vector<Vertex> vertices = {
@@ -82,8 +82,15 @@ int main() {
     default_shader.openShader("../default.frag", GL_FRAGMENT_SHADER);
     default_shader.compile();
 
-//    Model island("../Island/island.obj");
+    Model island("../Island/island.obj");
     Model crab("../Island/10012_crab_v2_iterations-1.obj");
+
+    island.meshes[0].model = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 2.0, 0.0));
+
+    glm::mat4 crabModel = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 4.0, 0.0));
+    crabModel = glm::scale(crabModel, glm::vec3(0.125));
+    crabModel = glm::rotate(crabModel, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+    crab.meshes[0].model = crabModel;
 
     FrameBuffer buffer;
 
@@ -101,11 +108,6 @@ int main() {
         ShaderProgram::camera = World::camera.position;
         ShaderProgram::view = World::camera.getView();
 
-        glm::mat4 crabModel = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 2.0, 0.0));
-        crabModel = glm::rotate(crabModel, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-        crabModel = glm::rotate(crabModel, glm::radians(float(glfwGetTime() * 20.0)), glm::vec3(0.0, 0.0, 1.0));
-        crab.meshes[0].model = crabModel;
-
         glViewport(0, 0, WIDTH, HEIGHT);
         buffer.bind();
 
@@ -120,7 +122,7 @@ int main() {
 
         default_shader.use();
 
-//        island.draw(default_shader);
+        island.draw(default_shader);
         crab.draw(default_shader);
 
         default_shader.stop();
