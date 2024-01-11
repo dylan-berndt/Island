@@ -8,7 +8,7 @@ other graphics programming projects.
 Added CubeMaps and subsequently added a skybox. Improved fog and added reflections to the water. Improved model loading to deal
 with multiple materials per object. Changed project structure and added palm plant.
 
-![ezgif-1-7165957ce5](https://github.com/dylan-berndt/Water-Demo/assets/33700799/937738b6-bf26-414e-8495-eaa6f16b9fef)
+![ezgif-1-7165957ce5](https://github.com/dylan-berndt/Water-Demo/assets/33700799/bd7d235c-25df-4066-a198-e97f454201c6)
 
 ## 1/6/23
 
