@@ -5,24 +5,6 @@
 
 using namespace std;
 
-GLchar *shaderString(const string& name) {
-    ifstream file;
-    char* src;
-    GLsizei length;
-
-    file.open(name);
-
-    file.seekg(0, ios::end);
-    length = file.tellg();
-
-    src = new char[length];
-    file.seekg(0, ios::beg);
-    file.read(src, length);
-    file.close();
-
-    return src;
-}
-
 ShaderProgram::ShaderProgram() {
     unsigned int s;
     s = glCreateProgram();
@@ -30,12 +12,14 @@ ShaderProgram::ShaderProgram() {
 }
 
 void ShaderProgram::openShader(const string& name, int type) const {
-    const GLchar *source = shaderString(name);
+    ifstream file(name);
+    string source((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+    const char *data = source.c_str();
 
     unsigned int shader;
     shader = glCreateShader(type);
 
-    glShaderSource(shader, 1, &source, nullptr);
+    glShaderSource(shader, 1, &data, nullptr);
     glCompileShader(shader);
 
     glAttachShader(self, shader);
@@ -50,7 +34,7 @@ void ShaderProgram::openShader(const string& name, int type) const {
         vector<GLchar> errorLog(maxLength);
         glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
 
-        cerr << "Shader error: Compilation of " << name << " failed" << endl;
+        cerr << "ERROR::SHADER Compilation of " << name << " failed" << endl;
         for (GLchar i: errorLog) {
             cout << i;
         }

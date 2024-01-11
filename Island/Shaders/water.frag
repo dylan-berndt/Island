@@ -3,17 +3,19 @@ out vec4 FragColor;
 
 in vec3 FragPos;
 
-#define WATER_COLOR vec3(0.05, 0.1, 0.1)
+#define WATER_COLOR vec3(0.0, 0.05, 0.2)
 
-#define AMBIENT_LIGHT 0.6
+#define AMBIENT_LIGHT 0.5
 #define LIGHT_DIRECTION normalize(vec3(1.0, -0.1, 1.0))
 
-uniform vec3 lightColor = vec3(1.0, 0.9, 0.8);
+uniform vec3 lightColor = vec3(1.0, 1.0, 1.0);
 uniform float time;
 uniform vec3 camera;
 
 #define SAMPLES 32
 #define DRAG_MULT 0.2
+
+uniform samplerCube sky;
 
 vec2 wavedx(vec2 position, vec2 direction, float frequency, float timeshift) {
     float x = dot(direction, position) * frequency + timeshift;
@@ -61,24 +63,28 @@ void main() {
 
     vec3 lightDir = LIGHT_DIRECTION;
 
-    vec3 normal = normal(FragPos.xz, 0.001, -10.0);
+    vec3 normal = normal(FragPos.xz, 0.001, 1.0);
 
     float specularStrength = 1.0;
     vec3 viewDir = normalize(camera - FragPos);
-    vec3 reflectDir = reflect(-lightDir, normal);
+    vec3 reflectDir = reflect(lightDir, normal);
 
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 4);
     vec3 specular = specularStrength * spec * lightColor;
 
-    float diffuse = max(dot(normal, -lightDir) / 2.0 + 0.5, 0.0);
+    float diffuse = max(dot(normal, -lightDir), 0.0);
+
+    vec3 I = normalize(FragPos - camera);
+    vec3 R = reflect(I, normalize(normal));
+    vec3 skyReflection = texture(sky, R).rgb;
 
     vec3 result = (ambient + diffuse + specular) * WATER_COLOR;
 
-    vec3 general = normal(FragPos.xz, 0.01, -10.0);
-    float num = 1.0 - dot(general, normal);
-    num = max(0.0, min(1.0, 0.25 * pow(num, 0.125)));
-    float height = max(0.0, getWaves(FragPos.xz) - 0.4);
-    result = mix(result, vec3(1.0), num + height);
+    result += skyReflection * 0.4;
 
-    FragColor = vec4(result, 1.0);
+    float height = getWaves(FragPos.xz);
+
+    result += vec3(1.0) * height;
+
+    FragColor = vec4(result, 1.0); 
 }

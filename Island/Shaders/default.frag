@@ -1,7 +1,7 @@
 #version 330 core
 out vec4 FragColor;
 
-#define AMBIENT 0.0
+#define AMBIENT 0.5
 #define LIGHT_DIRECTION normalize(vec3(1.0, -0.1, 1.0))
 
 in vec3 FragPos;
@@ -28,9 +28,9 @@ void main() {
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
     vec3 specular = specularStrength * spec * lightColor;
 
-    float diffuse = max(dot(Normal, -lightDir) / 2.0 + 0.5, 0.0);
+    float diffuse = max(dot(Normal, -lightDir), 0.0);
 
-    vec3 result = (ambient + diffuse + specular) * texture(baseTexture, TexCoords).xyz;
+    vec3 res = (ambient + diffuse + specular) * texture(baseTexture, TexCoords).xyz;
 
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4(res, 1.0);
 }

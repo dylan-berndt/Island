@@ -2,8 +2,8 @@
 #include "lib/pipe.h"
 using namespace std;
 
-#define WIDTH (1920 / 2)
-#define HEIGHT (1080 / 2)
+#define WIDTH (1400)
+#define HEIGHT (1000)
 
 int bloomKernelSize = 4;
 
@@ -50,47 +50,48 @@ int main() {
     glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
+    Square screen;
 
     int amount = 200;
     Mesh water = flatMesh(amount, amount);
     water.model = glm::translate(water.model, glm::vec3(0.0, 0.0, 0.0));
     water.model = glm::scale(water.model, glm::vec3(200.0, 1.0, 200.0));
 
-    vector<Vertex> vertices = {
-            Vertex(glm::vec3(-1.0, 1.0, 0.0), glm::vec2(0.0, 1.0)),
-            Vertex(glm::vec3(1.0, 1.0, 0.0), glm::vec2(1.0, 1.0)),
-            Vertex(glm::vec3(-1.0, -1.0, 0.0), glm::vec2(0.0, 0.0)),
-            Vertex(glm::vec3(1.0, -1.0, 0.0), glm::vec2(1.0, 0.0))
-    };
-
-    vector<int> indices = {0, 1, 2, 1, 3, 2};
-
-    Mesh screen(vertices, indices, vector<Texture2D>());
-
     ShaderProgram water_shader;
-    water_shader.openShader("../water.vert", GL_VERTEX_SHADER);
-    water_shader.openShader("../water.frag", GL_FRAGMENT_SHADER);
+    water_shader.openShader("../Island/Shaders/water.vert", GL_VERTEX_SHADER);
+    water_shader.openShader("../Island/Shaders/water.frag", GL_FRAGMENT_SHADER);
     water_shader.compile();
 
     ShaderProgram post_shader;
-    post_shader.openShader("../post.vert", GL_VERTEX_SHADER);
-    post_shader.openShader("../post.frag", GL_FRAGMENT_SHADER);
+    post_shader.openShader("../Island/Shaders/post.vert", GL_VERTEX_SHADER);
+    post_shader.openShader("../Island/Shaders/post.frag", GL_FRAGMENT_SHADER);
     post_shader.compile();
 
     ShaderProgram default_shader;
-    default_shader.openShader("../default.vert", GL_VERTEX_SHADER);
-    default_shader.openShader("../default.frag", GL_FRAGMENT_SHADER);
+    default_shader.openShader("../Island/Shaders/default.vert", GL_VERTEX_SHADER);
+    default_shader.openShader("../Island/Shaders/default.frag", GL_FRAGMENT_SHADER);
     default_shader.compile();
 
-    Model island("../Island/island.obj");
-    Model crab("../Island/10012_crab_v2_iterations-1.obj");
+    ShaderProgram skybox_shader;
+    skybox_shader.openShader("../Island/Shaders/skybox.vert", GL_VERTEX_SHADER);
+    skybox_shader.openShader("../Island/Shaders/skybox.frag", GL_FRAGMENT_SHADER);
+    skybox_shader.compile();
+
+    vector<string> faces = {"../Island/Sky/bluecloud_rt.jpg", "../Island/Sky/bluecloud_lf.jpg",
+                            "../Island/Sky/bluecloud_up.jpg", "../Island/Sky/bluecloud_dn.jpg",
+                            "../Island/Sky/bluecloud_bk.jpg", "../Island/Sky/bluecloud_ft.jpg"};
+
+    CubeMap skyMap(faces);
+    SkyBox sky(skyMap);
+    sky.model = glm::rotate(glm::mat4(1.0), glm::radians(-135.0f), glm::vec3(0.0, 1.0, 0.0));
+
+    Model island("../Island/Models/island.obj");
+    Model crab("../Island/Models/10012_crab_v2_iterations-1.obj");
+    Model palm("../Island/Models/Palm_01.obj");
 
     island.meshes[0].model = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 2.0, 0.0));
-
-    glm::mat4 crabModel = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 4.0, 0.0));
-    crabModel = glm::scale(crabModel, glm::vec3(0.125));
-    crabModel = glm::rotate(crabModel, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-    crab.meshes[0].model = crabModel;
 
     FrameBuffer buffer;
 
@@ -100,9 +101,19 @@ int main() {
     buffer.attachTexture2D(GL_COLOR_ATTACHMENT0, color_texture);
     buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, depth_texture);
 
+    glm::mat4 crabModel = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 4.0, 0.0));
+    crabModel = glm::scale(crabModel, glm::vec3(0.125));
+    crabModel = glm::rotate(crabModel, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
+    crab.meshes[0].model = crabModel;
+
+    glm::mat4 palmModel = glm::translate(glm::mat4(1.0), glm::vec3(-4.0, 3.8, 4.0));
+    palmModel = glm::scale(palmModel, glm::vec3(0.25));
+    palm.meshes[0].model = palmModel;
+    palm.meshes[1].model = palmModel;
+
     while (!glfwWindowShouldClose(win)) {
         delta = glfwGetTime() - last_time;
-//        cout << 1.0 / delta << endl;
+//        cout << "Approx. FPS: " << 1.0 / delta << endl;
         last_time = glfwGetTime();
 
         ShaderProgram::camera = World::camera.position;
@@ -114,7 +125,11 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        sky.draw(skybox_shader);
+
         water_shader.use();
+
+        skyMap.bind();
 
         water.draw(water_shader);
 
@@ -124,6 +139,7 @@ int main() {
 
         island.draw(default_shader);
         crab.draw(default_shader);
+        palm.draw(default_shader);
 
         default_shader.stop();
 

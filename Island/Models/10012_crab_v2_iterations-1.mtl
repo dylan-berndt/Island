@@ -12,5 +12,5 @@ newmtl 10012_crab
 	Kd 0.5882 0.5882 0.5882
 	Ks 0.0000 0.0000 0.0000
 	Ke 0.0000 0.0000 0.0000
-	map_Ka 10012_crab_v1_Diffuse.png
-	map_Kd 10012_crab_v1_Diffuse.png
+	map_Ka 10012_crab_v1_Diffuse.jpg
+	map_Kd 10012_crab_v1_Diffuse.jpg

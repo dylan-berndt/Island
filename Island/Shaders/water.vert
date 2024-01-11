@@ -11,7 +11,7 @@ uniform float time;
 
 out vec3 FragPos;
 
-#define SAMPLES 8
+#define SAMPLES 16
 #define DRAG_MULT 0.2
 
 vec2 wavedx(vec2 position, vec2 direction, float frequency, float timeshift) {

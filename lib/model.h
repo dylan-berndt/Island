@@ -18,7 +18,7 @@ private:
     std::string directory;
 
     void loadModel(std::string path);
-    Material loadMaterial(std::string file, std::string &name);
+    std::vector<Material> loadMaterials(std::string file);
 };
 
 #endif //PIPE_MODEL_H

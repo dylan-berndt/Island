@@ -48,6 +48,8 @@ public:
     Texture2D baseTexture;
     Texture2D specularTexture;
 
+    std::string name = "";
+
     Material() {};
 };
 
@@ -55,13 +57,16 @@ class Mesh {
 public:
     std::vector<Vertex> vertices;
     std::vector<int> indices;
-    std::vector<Texture2D> textures;
 
     glm::mat4 model;
 
     Material material;
 
-    Mesh(std::vector<Vertex>, std::vector<int>, std::vector<Texture2D>);
+    void bind() {glBindVertexArray(VAO);};
+
+    void resetMesh(std::vector<Vertex>, std::vector<int>);
+
+    Mesh(std::vector<Vertex>, std::vector<int>);
     void draw(ShaderProgram&);
 private:
     unsigned int VAO, VBO, EBO;
@@ -69,5 +74,6 @@ private:
 };
 
 Mesh flatMesh(int, int);
+
 
 #endif //PIPE_MESH_H

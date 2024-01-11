@@ -3,10 +3,18 @@
 
 using namespace std;
 
-Mesh::Mesh(vector<Vertex> v, vector<int> i, vector<Texture2D> t) {
+void Mesh::resetMesh(vector<Vertex> v, vector<int> i) {
     vertices = v;
     indices = i;
-    textures = t;
+
+    model = glm::mat4(1.0);
+
+    setupMesh();
+}
+
+Mesh::Mesh(vector<Vertex> v, vector<int> i) {
+    vertices = v;
+    indices = i;
 
     model = glm::mat4(1.0);
 
@@ -64,7 +72,7 @@ Mesh flatMesh(int nx, int ny) {
             float y = 0.0;
             float z = float(pz) / (float(ny) / 2.0f) - 1.0f;
 
-            vertices.push_back(Vertex(x, y, z));
+            vertices.emplace_back(x, y, z);
         }
     }
 
@@ -79,5 +87,5 @@ Mesh flatMesh(int nx, int ny) {
         }
     }
 
-    return Mesh(vertices, indices, vector<Texture2D>());
+    return Mesh(vertices, indices);
 }

@@ -25,7 +25,6 @@ void Model::loadModel(string path) {
 
     vector<Vertex> vertices;
     vector<int> indices;
-    vector<Texture2D> textures;
 
     map<string, Material> materials;
     Material currentMaterial;
@@ -42,11 +41,11 @@ void Model::loadModel(string path) {
 
         if (type == "o") {
             if (!vertices.empty()) {
-                Mesh newMesh(vertices, indices, textures);
+                Mesh newMesh(vertices, indices);
                 newMesh.material = currentMaterial;
                 meshes.push_back(newMesh);
 
-                vOffset = vertices.size();
+                vOffset = positions.size();
                 tOffset = texCoords.size();
                 nOffset = normals.size();
 
@@ -56,7 +55,6 @@ void Model::loadModel(string path) {
                 colors.clear();
                 vertices.clear();
                 indices.clear();
-                textures.clear();
             }
         }
 
@@ -64,14 +62,24 @@ void Model::loadModel(string path) {
             string materialPath;
             iss >> materialPath;
 
-            string name;
-            Material newMaterial = loadMaterial(materialPath, name);
+            vector<Material> newMaterials = loadMaterials(materialPath);
 
-            materials.insert({name, newMaterial});
+            for (auto mat : newMaterials) {
+                materials.insert({mat.name, mat});
+            }
         }
         else if (type == "usemtl") {
             string materialName;
             iss >> materialName;
+
+            if (!vertices.empty()) {
+                Mesh newMesh(vertices, indices);
+                newMesh.material = currentMaterial;
+                meshes.push_back(newMesh);
+
+                vertices.clear();
+                indices.clear();
+            }
 
             currentMaterial = materials[materialName];
         }
@@ -80,7 +88,6 @@ void Model::loadModel(string path) {
             float x, y, z;
             iss >> x >> y >> z;
             positions.emplace_back(x, y, z);
-            vertices.emplace_back(x, y, z);
         }
         else if (type == "vn") {
             float x, y, z;
@@ -127,19 +134,29 @@ void Model::loadModel(string path) {
 
             if (faceData.size() == 3) {
                 for (int t = 0; t < 3; t++) {
-                    indices.push_back(faceData[t].vIndex);
-                    vertices[indices.back()].texCoord = texCoords[faceData[t].tIndex];
-                    vertices[indices.back()].normal = normals[faceData[t].nIndex];
+                    Vertex newVertex(positions[faceData[t].vIndex],
+                                     normals[faceData[t].nIndex],
+                                     texCoords[faceData[t].tIndex]);
+
+                    vertices.push_back(newVertex);
+
+                    indices.push_back(vertices.size() - 1);
+
+//                    indices.push_back(faceData[t].vIndex);
+//                    vertices[indices.back()].texCoord = texCoords[faceData[t].tIndex];
+//                    vertices[indices.back()].normal = normals[faceData[t].nIndex];
                 }
             }
             else {
                 // I have cheated and I am not sorry at all
 
+                // Later edit: The OBJ file format is very weird and annoying
+
                 glm::vec3 averagePosition = glm::vec3(0.0);
                 glm::vec3 averageNormal = glm::vec3(0.0);
                 glm::vec2 averageTexCoord = glm::vec3(0.0);
 
-                for (int t = 0; t < 4; t++) {
+                for (int t = 0; t < faceData.size(); t++) {
                     averagePosition += positions[faceData[t].vIndex] * 0.25f;
                     averageNormal += normals[faceData[t].nIndex] * 0.25f;
                     averageTexCoord += texCoords[faceData[t].tIndex] * 0.25f;
@@ -147,25 +164,45 @@ void Model::loadModel(string path) {
 
                 Vertex center(averagePosition, averageNormal, averageTexCoord);
                 vertices.push_back(center);
+                int centerPosition = vertices.size() - 1;
 
-                for (int t = 0; t < 4; t++) {
-                    int next = (t + 1) % 4;
-                    indices.push_back(faceData[t].vIndex);
-                    vertices[indices.back()].texCoord = texCoords[faceData[t].tIndex];
-                    vertices[indices.back()].normal = normals[faceData[t].nIndex];
+                for (int t = 0; t < faceData.size(); t++) {
+                    int next = (t + 1) % faceData.size();
 
-                    indices.push_back(faceData[next].vIndex);
-                    vertices[indices.back()].texCoord = texCoords[faceData[next].tIndex];
-                    vertices[indices.back()].normal = normals[faceData[next].nIndex];
+                    Vertex newVertex(positions[faceData[t].vIndex],
+                                     normals[faceData[t].nIndex],
+                                     texCoords[faceData[t].tIndex]);
+
+                    vertices.push_back(newVertex);
 
                     indices.push_back(vertices.size() - 1);
+
+//                    indices.push_back(faceData[t].vIndex);
+//                    vertices[indices.back()].texCoord = texCoords[faceData[t].tIndex];
+//                    vertices[indices.back()].normal = normals[faceData[t].nIndex];
+
+                    Vertex nextVertex(positions[faceData[next].vIndex],
+                                     normals[faceData[next].nIndex],
+                                     texCoords[faceData[next].tIndex]);
+
+                    vertices.push_back(nextVertex);
+
+                    indices.push_back(vertices.size() - 1);
+
+//                    indices.push_back(faceData[next].vIndex);
+//                    vertices[indices.back()].texCoord = texCoords[faceData[next].tIndex];
+//                    vertices[indices.back()].normal = normals[faceData[next].nIndex];
+
+                    indices.push_back(centerPosition);
+
+//                    indices.push_back(vertices.size() - 1);
                 }
             }
         }
     }
 
     if (!vertices.empty()) {
-        Mesh newMesh(vertices, indices, textures);
+        Mesh newMesh(vertices, indices);
         newMesh.material = currentMaterial;
         meshes.push_back(newMesh);
     }
@@ -173,14 +210,16 @@ void Model::loadModel(string path) {
     infile.close();
 }
 
-Material Model::loadMaterial(string file, string &name) {
-    Material mat;
+vector<Material> Model::loadMaterials(string file) {
+    vector<Material> materials;
 
     ifstream infile(directory + file);
     if (!infile) {
         cout << "ERROR::MATERIAL Couldn't find " << directory + file << endl;
-        return mat;
+        return vector<Material>();
     }
+
+    Material mat;
 
     string line;
 
@@ -214,13 +253,19 @@ Material Model::loadMaterial(string file, string &name) {
         }
 
         else if (type == "newmtl") {
-            iss >> name;
+            if (!mat.name.empty()) {
+                materials.push_back(mat);
+                mat = Material{};
+            }
+            iss >> mat.name;
         }
     }
 
     infile.close();
 
-    return mat;
+    materials.push_back(mat);
+
+    return materials;
 }
 
 void Model::draw(ShaderProgram &shader) {
