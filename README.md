@@ -3,6 +3,13 @@
 This is an ocean scene rendering project I have been working on to learn OpenGL and create a framework I can use for 
 other graphics programming projects.
 
+## 1/11/23
+
+Added CubeMaps and subsequently added a skybox. Improved fog and added reflections to the water. Improved model loading to deal
+with multiple materials per object. Changed project structure and added palm plant.
+
+![ezgif-1-7165957ce5](https://github.com/dylan-berndt/Water-Demo/assets/33700799/937738b6-bf26-414e-8495-eaa6f16b9fef)
+
 ## 1/6/23
 
 ![ezgif-4-c6e04d1e42](https://github.com/dylan-berndt/Water-Demo/assets/33700799/20af5d23-70f3-42de-a6bd-92144ed7da6d)
