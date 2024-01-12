@@ -22,26 +22,32 @@ other graphics programming projects.
 * Effects
   * HDR Bloom
   * Depth-based fog
+ 
+## 1/12/24
 
-## 1/11/23
+Made some changes to effects and a few QoL improvements. Changed model loading to support more vertices and objects. 
+
+![ezgif-7-96244a467b](https://github.com/dylan-berndt/Island/assets/33700799/94cbf2cc-81c9-475c-a356-a3a2434eecb0)
+
+## 1/11/24
 
 Added CubeMaps and subsequently added a skybox. Improved fog and added reflections to the water. Improved model loading to deal
 with multiple materials per object. Changed project structure and added palm plant.
 
 ![ezgif-1-7165957ce5](https://github.com/dylan-berndt/Water-Demo/assets/33700799/bd7d235c-25df-4066-a198-e97f454201c6)
 
-## 1/6/23
+## 1/6/24
 
 ![ezgif-4-c6e04d1e42](https://github.com/dylan-berndt/Water-Demo/assets/33700799/20af5d23-70f3-42de-a6bd-92144ed7da6d)
 
-## 1/5/23
+## 1/5/24
 
 Model loading is more fleshed out now, can load base, specular, and emissive colors along with a base texture.
 Next to implement is the rest of Materials, including normal maps and others.
 
 ![ezgif-3-6a1c98eb79](https://github.com/dylan-berndt/Water-Demo/assets/33700799/bb6b71af-9942-4de0-b9dd-8a5b5faf05aa)
 
-## 1/4/23 
+## 1/4/24
 
 Began implementing Model loading. I couldn't get Assimp to build correctly at any point over the past entire day, 
 so I'm making my own system. It currently only works with simple triangular meshes in .obj files, but I expect
@@ -56,7 +62,7 @@ More in-depth model loading and camera controls:
 
 ![ezgif com-video-to-gif-converter](https://github.com/dylan-berndt/Water-Demo/assets/33700799/9c159a61-d235-4023-bf32-49d8aed80a6c)
 
-## 1/3/23
+## 1/3/24
 
 No major visual changes, but transition from direct use of Vertex Array Objects to a Mesh approach. Also standardized 
 shader uniforms such as projection and view. About to begin development implementing Models and model loading.
