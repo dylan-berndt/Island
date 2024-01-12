@@ -45,9 +45,9 @@ void Model::loadModel(string path) {
                 newMesh.material = currentMaterial;
                 meshes.push_back(newMesh);
 
-                vOffset = positions.size();
-                tOffset = texCoords.size();
-                nOffset = normals.size();
+                vOffset += positions.size();
+                tOffset += texCoords.size();
+                nOffset += normals.size();
 
                 positions.clear();
                 normals.clear();
@@ -59,8 +59,8 @@ void Model::loadModel(string path) {
         }
 
         else if (type == "mtllib") {
-            string materialPath;
-            iss >> materialPath;
+            int space = line.find_first_of(' ');
+            string materialPath = line.substr(space + 1, line.length() - space + 1);
 
             vector<Material> newMaterials = loadMaterials(materialPath);
 
@@ -141,10 +141,6 @@ void Model::loadModel(string path) {
                     vertices.push_back(newVertex);
 
                     indices.push_back(vertices.size() - 1);
-
-//                    indices.push_back(faceData[t].vIndex);
-//                    vertices[indices.back()].texCoord = texCoords[faceData[t].tIndex];
-//                    vertices[indices.back()].normal = normals[faceData[t].nIndex];
                 }
             }
             else {
@@ -157,9 +153,9 @@ void Model::loadModel(string path) {
                 glm::vec2 averageTexCoord = glm::vec3(0.0);
 
                 for (int t = 0; t < faceData.size(); t++) {
-                    averagePosition += positions[faceData[t].vIndex] * 0.25f;
-                    averageNormal += normals[faceData[t].nIndex] * 0.25f;
-                    averageTexCoord += texCoords[faceData[t].tIndex] * 0.25f;
+                    averagePosition += positions[faceData[t].vIndex] * (1.0f / faceData.size());
+                    averageNormal += normals[faceData[t].nIndex] * (1.0f / faceData.size());
+                    averageTexCoord += texCoords[faceData[t].tIndex] * (1.0f / faceData.size());
                 }
 
                 Vertex center(averagePosition, averageNormal, averageTexCoord);
@@ -177,10 +173,6 @@ void Model::loadModel(string path) {
 
                     indices.push_back(vertices.size() - 1);
 
-//                    indices.push_back(faceData[t].vIndex);
-//                    vertices[indices.back()].texCoord = texCoords[faceData[t].tIndex];
-//                    vertices[indices.back()].normal = normals[faceData[t].nIndex];
-
                     Vertex nextVertex(positions[faceData[next].vIndex],
                                      normals[faceData[next].nIndex],
                                      texCoords[faceData[next].tIndex]);
@@ -189,13 +181,7 @@ void Model::loadModel(string path) {
 
                     indices.push_back(vertices.size() - 1);
 
-//                    indices.push_back(faceData[next].vIndex);
-//                    vertices[indices.back()].texCoord = texCoords[faceData[next].tIndex];
-//                    vertices[indices.back()].normal = normals[faceData[next].nIndex];
-
                     indices.push_back(centerPosition);
-
-//                    indices.push_back(vertices.size() - 1);
                 }
             }
         }
@@ -245,11 +231,19 @@ vector<Material> Model::loadMaterials(string file) {
         }
 
         else if (type == "map_Kd") {
-            string textureName;
-            iss >> textureName;
+            int space = line.find_first_of(' ');
+            string textureName = line.substr(space + 1, line.length() - space + 1);
 
             Texture2D baseTexture((directory + textureName).c_str());
             mat.baseTexture = baseTexture;
+        }
+
+        else if (type == "map_Bump") {
+            int space = line.find_first_of(' ');
+            string textureName = line.substr(space + 1, line.length() - space + 1);
+
+            Texture2D normalTexture((directory + textureName).c_str());
+            mat.normalTexture = normalTexture;
         }
 
         else if (type == "newmtl") {

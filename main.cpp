@@ -2,8 +2,8 @@
 #include "lib/pipe.h"
 using namespace std;
 
-#define WIDTH (1400)
-#define HEIGHT (1000)
+#define WIDTH (1920 * 3 / 4)
+#define HEIGHT (1080 * 3 / 4)
 
 int bloomKernelSize = 4;
 
@@ -13,7 +13,7 @@ int screen_height = HEIGHT;
 float delta = 0;
 double last_time = 0;
 
-glm::mat4 ShaderProgram::perspective = glm::perspective(glm::radians(70.0f), float(WIDTH) / float(HEIGHT), 0.1f, 500.0f);
+glm::mat4 ShaderProgram::perspective = glm::perspective(glm::radians(60.0f), float(WIDTH) / float(HEIGHT), 0.1f, 500.0f);
 glm::mat4 ShaderProgram::view;
 glm::vec3 ShaderProgram::camera;
 
@@ -52,12 +52,16 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
+    glEnable(GL_BLEND);
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     Square screen;
 
-    int amount = 200;
+    int amount = 800;
     Mesh water = flatMesh(amount, amount);
-    water.model = glm::translate(water.model, glm::vec3(0.0, 0.0, 0.0));
-    water.model = glm::scale(water.model, glm::vec3(200.0, 1.0, 200.0));
+    water.model = glm::translate(water.model, glm::vec3(0.0, -1.5, 0.0));
+    water.model = glm::scale(water.model, glm::vec3(400.0, 1.0, 400.0));
 
     ShaderProgram water_shader;
     water_shader.openShader("../Island/Shaders/water.vert", GL_VERTEX_SHADER);
@@ -87,29 +91,32 @@ int main() {
     SkyBox sky(skyMap);
     sky.model = glm::rotate(glm::mat4(1.0), glm::radians(-135.0f), glm::vec3(0.0, 1.0, 0.0));
 
-    Model island("../Island/Models/island.obj");
-    Model crab("../Island/Models/10012_crab_v2_iterations-1.obj");
-    Model palm("../Island/Models/Palm_01.obj");
+    Model island("../Island/Models/Island/island.obj");
+    Model crab("../Island/Models/Crab/10012_crab_v2_iterations-1.obj");
+    Model palm("../Island/Models/Palm Plant/Palm_01.obj");
+    Model tree("../Island/Models/Palm Tree/CoconutPalm.obj");
 
-    island.meshes[0].model = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 2.0, 0.0));
+    crab.transform(glm::vec3(0.0, 2.0, 0.0), glm::vec3(-90.0, 0.0, 0.0), glm::vec3(0.125));
+    palm.transform(glm::vec3(-4.0, 1.8, 4.0), glm::vec3(0.0), glm::vec3(0.25));
+    tree.transform(glm::vec3(2.0, 0.4, -4.0), glm::vec3(-90.0, 0.0, 0.0), glm::vec3(0.125));
+
+    Model rock_10("../Island/Models/Rocks/10/moss rock 10.obj");
+    Model rock_12("../Island/Models/Rocks/12/moss rock 12.obj");
+    Model rock_13("../Island/Models/Rocks/13/moss rock 13.obj");
+    Model rock_14("../Island/Models/Rocks/14/moss rock 14.obj");
+
+    rock_10.transform(Transform(glm::vec3(10.0, 2.0, -10.0)));
+    rock_12.transform(Transform(glm::vec3(-10.0, 2.0, -10.0)));
+    rock_13.transform(Transform(glm::vec3(-10.0, 2.0, 10.0)));
+    rock_14.transform(Transform(glm::vec3(10.0, 2.0, 10.0)));
 
     FrameBuffer buffer;
 
     Texture2D color_texture("", WIDTH, HEIGHT, GL_RGB);
-    Texture2D depth_texture("", WIDTH, HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT);
+    Texture2D depth_texture("", WIDTH, HEIGHT, GL_DEPTH_COMPONENT);
 
     buffer.attachTexture2D(GL_COLOR_ATTACHMENT0, color_texture);
     buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, depth_texture);
-
-    glm::mat4 crabModel = glm::translate(glm::mat4(1.0), glm::vec3(0.0, 4.0, 0.0));
-    crabModel = glm::scale(crabModel, glm::vec3(0.125));
-    crabModel = glm::rotate(crabModel, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
-    crab.meshes[0].model = crabModel;
-
-    glm::mat4 palmModel = glm::translate(glm::mat4(1.0), glm::vec3(-4.0, 3.8, 4.0));
-    palmModel = glm::scale(palmModel, glm::vec3(0.25));
-    palm.meshes[0].model = palmModel;
-    palm.meshes[1].model = palmModel;
 
     while (!glfwWindowShouldClose(win)) {
         delta = glfwGetTime() - last_time;
@@ -118,6 +125,9 @@ int main() {
 
         ShaderProgram::camera = World::camera.position;
         ShaderProgram::view = World::camera.getView();
+
+        water.model[3][0] = int(World::camera.position.x);
+        water.model[3][2] = int(World::camera.position.z);
 
         glViewport(0, 0, WIDTH, HEIGHT);
         buffer.bind();
@@ -140,6 +150,15 @@ int main() {
         island.draw(default_shader);
         crab.draw(default_shader);
         palm.draw(default_shader);
+
+//        rock_10.draw(default_shader);
+//        rock_12.draw(default_shader);
+//        rock_13.draw(default_shader);
+//        rock_14.draw(default_shader);
+
+        glDisable(GL_CULL_FACE);
+        tree.draw(default_shader);
+        glEnable(GL_CULL_FACE);
 
         default_shader.stop();
 

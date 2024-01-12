@@ -6,7 +6,7 @@ in vec3 FragPos;
 #define WATER_COLOR vec3(0.0, 0.05, 0.2)
 
 #define AMBIENT_LIGHT 0.5
-#define LIGHT_DIRECTION normalize(vec3(1.0, -0.1, 1.0))
+#define LIGHT_DIRECTION normalize(vec3(1.0, -1.0, 1.0))
 
 uniform vec3 lightColor = vec3(1.0, 1.0, 1.0);
 uniform float time;
@@ -80,11 +80,12 @@ void main() {
 
     vec3 result = (ambient + diffuse + specular) * WATER_COLOR;
 
-    result += skyReflection * 0.4;
+    result = mix(result, skyReflection, 0.5);
 
-    float height = getWaves(FragPos.xz);
+    vec3 general = normal(FragPos.xz, 0.05, 1.0);
+    float height = max(getWaves(FragPos.xz) - 0.4, -0.2);
 
-    result += vec3(1.0) * height;
+    result += vec3(1.0, 1.0, 1.0) * height;
 
     FragColor = vec4(result, 1.0); 
 }

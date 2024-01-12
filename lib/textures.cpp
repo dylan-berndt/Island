@@ -7,13 +7,17 @@
 
 using namespace std;
 
-Texture2D::Texture2D(const char* name, int w, int h, int t, int dtype) {
+Texture2D::Texture2D(const char* name, int w, int h, int t) {
     int c;
     data = nullptr;
 
     stbi_set_flip_vertically_on_load(true);
     if (name != nullptr && name[0] != '\0') {
-        unsigned char *d = stbi_load(name, &w, &h, &c, 0);
+        int length = strlen(name);
+        bool RGBA = length >= 4 && strcmp(name + length - 4, ".png") == 0;
+        t = RGBA ? GL_RGBA : GL_RGB;
+
+        unsigned char *d = stbi_load(name, &w, &h, &c, RGBA ? STBI_rgb_alpha : STBI_rgb);
         data = d;
 
         if(stbi_failure_reason()) {

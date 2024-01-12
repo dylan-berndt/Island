@@ -51,5 +51,5 @@ void main() {
     FragPos = vec3(worldPos);
 
     vec4 shift = vec4(0.0, getWaves(worldPos.xz), 0.0, 0.0);
-    gl_Position = projection * view * model * vec4(aPos, 1.0) + shift;
+    gl_Position = projection * view * model * vec4(aPos, 1.0) + shift * 0.6;
 }

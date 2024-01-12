@@ -1,0 +1,126 @@
+# Wavefront Object Material File
+# Generated using SpeedTree tools
+
+newmtl CoconutPalmBark
+Tr 0
+d 1
+Kd 1 1 1
+Ka 0.639216 0.654902 0.654902
+illum 1
+map_Kd Palmetto_bark_2.png
+map_d Palmetto_bark_2.png
+map_bump Palmetto_bark_2_Normal.png
+bump Palmetto_bark_2_Normal.png -bm 1
+
+
+newmtl FrondStem
+Tr 0
+d 1
+Kd 1 1 1
+Ka 0.65098 0.662745 0.662745
+Ks 0.337255 0.337255 0.337255
+Ns 51.4
+illum 2
+map_Kd Stem_3.png
+map_d Stem_3.png
+map_bump Stem_3_Normal.png
+bump Stem_3_Normal.png -bm 1
+map_Ks Stem_3_Gloss.png
+
+
+newmtl Cap_03
+Tr 0
+d 1
+Kd 1 1 1
+Ka 0.717647 0.737255 0.737255
+illum 1
+map_Kd Cap_03.tga
+map_d Cap_03.tga
+map_bump Cap_03_Normal.tga
+bump Cap_03_Normal.tga -bm 1
+
+
+newmtl CoconutPalmClip
+Tr 0
+d 1
+Kd 1 1 1
+Ka 0.717647 0.737255 0.737255
+illum 1
+map_Kd CoconutPalmClip.tga
+map_d CoconutPalmClip.tga
+map_bump CoconutPalmClip_Normal.tga
+bump CoconutPalmClip_Normal.tga -bm 1
+
+
+newmtl CoconutSkin
+Tr 0
+d 1
+Kd 1 1 1
+Ka 0.717647 0.737255 0.737255
+illum 1
+map_Kd CoconutSkin.tga
+map_d CoconutSkin.tga
+map_bump CoconutSkin_Normal.tga
+bump CoconutSkin_Normal.tga -bm 1
+
+
+newmtl CoconutPalmLeaflet_1
+Tr 0
+d 1
+Kd 1 1 1
+Ka 0.764706 0.772549 0.772549
+Ks 0.501961 0.501961 0.501961
+Ns 64
+illum 2
+map_Kd CoconutPalmLeaflet_1.tga
+map_d CoconutPalmLeaflet_1.tga
+map_bump CoconutPalmLeaflet_1_Normal.tga
+bump CoconutPalmLeaflet_1_Normal.tga -bm 1
+map_Ks CoconutPalmLeaflet_1_Spec.tga
+
+
+newmtl CoconutPalmLeaflet_2
+Tr 0
+d 1
+Kd 1 1 1
+Ka 0.764706 0.772549 0.772549
+Ks 0.501961 0.501961 0.501961
+Ns 64
+illum 2
+map_Kd CoconutPalmLeaflet_2.tga
+map_d CoconutPalmLeaflet_2.tga
+map_bump CoconutPalmLeaflet_2_Normal.tga
+bump CoconutPalmLeaflet_2_Normal.tga -bm 1
+map_Ks CoconutPalmLeaflet_2_Spec.tga
+
+
+newmtl CoconutPalmLeaflet_3
+Tr 0
+d 1
+Kd 1 1 1
+Ka 0.764706 0.772549 0.772549
+Ks 0.501961 0.501961 0.501961
+Ns 64
+illum 2
+map_Kd CoconutPalmLeaflet_3.tga
+map_d CoconutPalmLeaflet_3.tga
+map_bump CoconutPalmLeaflet_3_Normal.tga
+bump CoconutPalmLeaflet_3_Normal.tga -bm 1
+map_Ks CoconutPalmLeaflet_3_Spec.tga
+
+
+newmtl CoconutPalmLeaflet_4
+Tr 0
+d 1
+Kd 1 1 1
+Ka 0.764706 0.772549 0.772549
+Ks 0.501961 0.501961 0.501961
+Ns 64
+illum 2
+map_Kd CoconutPalmLeaflet_4.tga
+map_d CoconutPalmLeaflet_4.tga
+map_bump CoconutPalmLeaflet_4_Normal.tga
+bump CoconutPalmLeaflet_4_Normal.tga -bm 1
+map_Ks CoconutPalmLeaflet_4_Spec.tga
+
+

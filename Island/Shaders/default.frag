@@ -2,7 +2,7 @@
 out vec4 FragColor;
 
 #define AMBIENT 0.5
-#define LIGHT_DIRECTION normalize(vec3(1.0, -0.1, 1.0))
+#define LIGHT_DIRECTION normalize(vec3(1.0, -1.0, 1.0))
 
 in vec3 FragPos;
 in vec3 Normal;
@@ -30,7 +30,7 @@ void main() {
 
     float diffuse = max(dot(Normal, -lightDir), 0.0);
 
-    vec3 res = (ambient + diffuse + specular) * texture(baseTexture, TexCoords).xyz;
+    vec4 res = vec4(ambient + diffuse + specular, 1.0) * texture(baseTexture, TexCoords);
 
-    FragColor = vec4(res, 1.0);
+    FragColor = res;
 }

@@ -13,7 +13,7 @@ public:
     int width;
     int height;
     unsigned int id() const {return self;};
-    explicit Texture2D(const char* name, int w = 0, int h = 0, int t = GL_RGB, int dtype = GL_UNSIGNED_BYTE);
+    explicit Texture2D(const char* name, int w = 0, int h = 0, int t = GL_RGB);
     explicit Texture2D(unsigned int num);
     Texture2D() {width = 0; height = 0; self = 0; data = nullptr;};
 

@@ -7,6 +7,8 @@ link_directories(lib/external/glfw-3.3.9.bin.WIN64/lib-mingw-w64 lib/external)
 
 set(CMAKE_CXX_STANDARD 14)
 
+set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static -lpthread")
+
 add_executable(Pipe main.cpp lib/pipe.cpp lib/pipe.h lib/external/glad.c lib/external/glad/glad.h lib/back.h
         lib/shader.cpp lib/shader.h lib/textures.cpp lib/textures.h
         lib/external/stb_image.h lib/mesh.cpp lib/mesh.h lib/model.cpp lib/model.h lib/obj.cpp lib/obj.h)
