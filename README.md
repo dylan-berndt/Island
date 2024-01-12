@@ -8,7 +8,11 @@ other graphics programming projects.
 * OpenGL interface
   * Abstracted Model and Mesh system
   * Custom loading of .obj and .mtl
-  * Textures, CubeMaps, Shaders
+  * Textures
+  * CubeMaps
+  * Shaders
+  * FrameBuffers
+  * etc.
 * PBR
   * Blinn-Phong shading
   * Environment reflections
