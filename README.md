@@ -1,7 +1,23 @@
-# Water Demo
+# Island Demo
 
 This is an ocean scene rendering project I have been working on to learn OpenGL and create a framework I can use for 
 other graphics programming projects.
+
+## Features
+
+* OpenGL interface
+  * Abstracted Model and Mesh system
+  * Custom loading of .obj and .mtl
+  * Textures, CubeMaps, Shaders
+* PBR
+  * Blinn-Phong shading
+  * Environment reflections
+* Fluid simulation
+  * Sum of sines method
+  * Central Difference normals
+* Effects
+  * HDR Bloom
+  * Depth-based fog
 
 ## 1/11/23
 
