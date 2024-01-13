@@ -1,9 +1,13 @@
 
 #include "lib/pipe.h"
+
 using namespace std;
 
 #define WIDTH (1920 * 3 / 4)
 #define HEIGHT (1080 * 3 / 4)
+
+#define SHADOW_WIDTH (2048)
+#define SHADOW_HEIGHT (2048)
 
 int bloomKernelSize = 4;
 
@@ -12,12 +16,6 @@ int screen_height = HEIGHT;
 
 float delta = 0;
 double last_time = 0;
-
-glm::mat4 ShaderProgram::perspective = glm::perspective(glm::radians(60.0f), float(WIDTH) / float(HEIGHT), 0.1f, 500.0f);
-glm::mat4 ShaderProgram::view;
-glm::vec3 ShaderProgram::camera;
-
-Camera World::camera(glm::vec3(0.0, 4.0, 20.0), 0, 0, 0);
 
 void cursorPosCallback(GLFWwindow *window, double xpos, double ypos);
 
@@ -47,7 +45,7 @@ int main() {
     glfwSetFramebufferSizeCallback(win, framebufferSizeCallback);
     glfwSetKeyCallback(win, keyCallback);
     glfwSetCursorPosCallback(win, cursorPosCallback);
-    glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -55,6 +53,15 @@ int main() {
     glEnable(GL_BLEND);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    World::camera = Camera(glm::vec3(0.0, 4.0, 20.0), glm::vec3(0.0));
+    ShaderProgram::perspective = glm::perspective(glm::radians(60.0f), float(WIDTH) / float(HEIGHT), 0.1f, 500.0f);
+
+    glm::mat4 lightProjection = glm::ortho(-40.0f, 40.0f, -20.0f, 20.0f, 0.1f, 80.0f);
+    glm::mat4 lightView = glm::lookAt(glm::vec3(-15.0f, 15.0f, -15.0f),
+                                      glm::vec3( 0.0f, 0.0f,  0.0f),
+                                      glm::vec3( 0.0f, 1.0f,  0.0f));
+    ShaderProgram::lightSpace = lightProjection * lightView;
 
     Square screen;
 
@@ -83,6 +90,11 @@ int main() {
     skybox_shader.openShader("../Island/Shaders/skybox.frag", GL_FRAGMENT_SHADER);
     skybox_shader.compile();
 
+    ShaderProgram shadow_shader;
+    shadow_shader.openShader("../Island/Shaders/shadow.vert", GL_VERTEX_SHADER);
+    shadow_shader.openShader("../Island/Shaders/shadow.frag", GL_FRAGMENT_SHADER);
+    shadow_shader.compile();
+
     vector<string> faces = {"../Island/Sky/bluecloud_rt.jpg", "../Island/Sky/bluecloud_lf.jpg",
                             "../Island/Sky/bluecloud_up.jpg", "../Island/Sky/bluecloud_dn.jpg",
                             "../Island/Sky/bluecloud_bk.jpg", "../Island/Sky/bluecloud_ft.jpg"};
@@ -110,29 +122,69 @@ int main() {
     rock_13.transform(Transform(glm::vec3(-10.0, 2.0, 10.0)));
     rock_14.transform(Transform(glm::vec3(10.0, 2.0, 10.0)));
 
-    FrameBuffer buffer;
+    FrameBuffer after_effects_buffer;
 
-    Texture2D color_texture("", WIDTH, HEIGHT, GL_RGB);
-    Texture2D depth_texture("", WIDTH, HEIGHT, GL_DEPTH_COMPONENT);
+    Texture2D color_texture(WIDTH, HEIGHT, GL_RGB);
+    Texture2D depth_texture(WIDTH, HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT);
 
-    buffer.attachTexture2D(GL_COLOR_ATTACHMENT0, color_texture);
-    buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, depth_texture);
+    after_effects_buffer.attachTexture2D(GL_COLOR_ATTACHMENT0, color_texture);
+    after_effects_buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, depth_texture);
+
+    FrameBuffer shadow_buffer;
+
+    Texture2D shadow_texture(SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT);
+    shadow_texture.bind();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    shadow_texture.unbind();
+
+    shadow_buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, shadow_texture);
+    shadow_buffer.bind();
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    shadow_buffer.unbind();
 
     while (!glfwWindowShouldClose(win)) {
         delta = glfwGetTime() - last_time;
-//        cout << "Approx. FPS: " << 1.0 / delta << endl;
+        cout << "Approx. FPS: " << 1.0 / delta << endl;
         last_time = glfwGetTime();
 
-        ShaderProgram::camera = World::camera.position;
-        ShaderProgram::view = World::camera.getView();
+        update();
 
-        water.model[3][0] = int(World::camera.position.x);
-        water.model[3][2] = int(World::camera.position.z);
+        water.model[3][0] = float(int(World::camera.position.x));
+        water.model[3][2] = float(int(World::camera.position.z));
+
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        shadow_buffer.bind();
+
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        shadow_shader.use();
+
+        glDisable(GL_CULL_FACE);
+        island.draw(shadow_shader);
+        crab.draw(shadow_shader);
+        palm.draw(shadow_shader);
+        tree.draw(shadow_shader);
+
+        rock_10.draw(shadow_shader);
+        rock_12.draw(shadow_shader);
+        rock_13.draw(shadow_shader);
+        rock_14.draw(shadow_shader);
+
+        glEnable(GL_CULL_FACE);
+
+        shadow_shader.stop();
+
+        shadow_buffer.unbind();
 
         glViewport(0, 0, WIDTH, HEIGHT);
-        buffer.bind();
+        after_effects_buffer.bind();
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         sky.draw(skybox_shader);
@@ -147,14 +199,17 @@ int main() {
 
         default_shader.use();
 
+        shadow_texture.activate(GL_TEXTURE2);
+        default_shader.setInt("shadowMap", 2);
+
         island.draw(default_shader);
         crab.draw(default_shader);
         palm.draw(default_shader);
 
-//        rock_10.draw(default_shader);
-//        rock_12.draw(default_shader);
-//        rock_13.draw(default_shader);
-//        rock_14.draw(default_shader);
+        rock_10.draw(default_shader);
+        rock_12.draw(default_shader);
+        rock_13.draw(default_shader);
+        rock_14.draw(default_shader);
 
         glDisable(GL_CULL_FACE);
         tree.draw(default_shader);
@@ -162,19 +217,21 @@ int main() {
 
         default_shader.stop();
 
-        buffer.unbind();
+        after_effects_buffer.unbind();
 
         glViewport(0, 0, screen_width, screen_height);
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         post_shader.use();
 
         depth_texture.activate(GL_TEXTURE0);
         color_texture.activate(GL_TEXTURE1);
+        shadow_texture.activate(GL_TEXTURE2);
 
         post_shader.setInt("depth", 0);
         post_shader.setInt("color", 1);
+        post_shader.setInt("shadowMap", 2);
 
         post_shader.setInt("kernelSize", bloomKernelSize);
 
@@ -199,7 +256,7 @@ int main() {
     return 0;
 }
 
-bool focused = true;
+bool focused = false;
 double mx, my = 0;
 
 void cursorPosCallback(GLFWwindow *window, double xpos, double ypos) {

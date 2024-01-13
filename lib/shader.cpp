@@ -5,6 +5,11 @@
 
 using namespace std;
 
+glm::mat4 ShaderProgram::perspective;
+glm::mat4 ShaderProgram::view;
+glm::mat4 ShaderProgram::lightSpace;
+glm::vec3 ShaderProgram::camera;
+
 ShaderProgram::ShaderProgram() {
     unsigned int s;
     s = glCreateProgram();
@@ -54,6 +59,7 @@ void ShaderProgram::use() const {
 
     setMat4("projection", ShaderProgram::perspective);
     setMat4("view", ShaderProgram::view);
+    setMat4("lightSpace", ShaderProgram::lightSpace);
     setVec3("camera", ShaderProgram::camera);
     setFloat("time", float(glfwGetTime()));
 }

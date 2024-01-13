@@ -7,19 +7,26 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+uniform mat4 lightSpace;
+
+uniform vec3 camera;
+
 uniform float time;
 
 out vec3 FragPos;
 out vec3 Normal;
 out vec2 TexCoords;
 
+out vec4 ShadowPos;
+
 void main() {
-    vec4 worldPos = model * vec4(aPos, 1.0);
-    FragPos = vec3(worldPos);
+    FragPos = vec3(model * vec4(aPos, 1.0));
 
     TexCoords = texCoord;
 
     Normal = normalize(mat3(model) * aNormal);
+
+    ShadowPos = lightSpace * model * vec4(aPos, 1.0);
 
     gl_Position = projection * view * model * vec4(aPos, 1.0);
 }

@@ -7,8 +7,21 @@
 
 using namespace std;
 
-Texture2D::Texture2D(const char* name, int w, int h, int t) {
-    int c;
+Texture2D::Texture2D(int w, int h, int t, int dtype) {
+    data = nullptr;
+    width = w;
+    height = h;
+
+    unsigned int texture;
+    glGenTextures(1, &texture);
+
+    self = texture;
+
+    create(width, height, t, data, dtype);
+}
+
+Texture2D::Texture2D(const char* name) {
+    int c, w, h, t;
     data = nullptr;
 
     stbi_set_flip_vertically_on_load(true);
@@ -33,13 +46,13 @@ Texture2D::Texture2D(const char* name, int w, int h, int t) {
 
     self = texture;
 
-    create(width, height, t, data);
+    create(width, height, t, data, GL_UNSIGNED_BYTE);
 }
 
-void Texture2D::create(int w, int h, int t, unsigned char* d) {
+void Texture2D::create(int w, int h, int t, unsigned char* d, int dtype) {
     bind();
 
-    glTexImage2D(GL_TEXTURE_2D, 0, t, w, h, 0, t, GL_UNSIGNED_BYTE, d);
+    glTexImage2D(GL_TEXTURE_2D, 0, t, w, h, 0, t, dtype, d);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     unbind();

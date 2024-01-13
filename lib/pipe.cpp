@@ -1,21 +1,31 @@
 
 #include "pipe.h"
+
 using namespace std;
 
-Camera::Camera(glm::vec3 pos, float p, float y, float r) {
+void initialize() {
+
+}
+
+void update() {
+    ShaderProgram::camera = World::camera.position;
+    ShaderProgram::view = World::camera.getView();
+}
+
+Camera World::camera;
+
+Camera::Camera(glm::vec3 pos, glm::vec3 rot) {
     position = pos;
-    pitch = p;
-    yaw = y;
-    roll = r;
+    rotation = rot;
 
     getRotation();
 }
 
 void Camera::rotateByMouse(double dx, double dy) {
-    yaw += dx * 0.1;
-    pitch += dy * 0.1;
+    rotation.y += dx * 0.1;
+    rotation.x += dy * 0.1;
 
-    pitch = glm::clamp(pitch, -79.0f, 79.0f);
+    rotation.x = glm::clamp(rotation.x, -79.0f, 79.0f);
 
     getRotation();
 }
@@ -23,9 +33,9 @@ void Camera::rotateByMouse(double dx, double dy) {
 glm::mat4 Camera::getView() {
     glm::mat4 view(1.0);
 
-    view = glm::rotate(view, glm::radians(pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-    view = glm::rotate(view, glm::radians(yaw), glm::vec3(0.0f, 1.0f, 0.0f));
-    view = glm::rotate(view, glm::radians(roll), glm::vec3(0.0f, 0.0f, 1.0f));
+    view = glm::rotate(view, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    view = glm::rotate(view, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    view = glm::rotate(view, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
     view = glm::translate(view, -position);
 
@@ -34,9 +44,9 @@ glm::mat4 Camera::getView() {
 
 void Camera::getRotation() {
     glm::mat4 view(1.0);
-    view = glm::rotate(view, glm::radians(-yaw), glm::vec3(0.0f, 1.0f, 0.0f));
-    view = glm::rotate(view, glm::radians(-pitch), glm::vec3(1.0f, 0.0f, 0.0f));
-    view = glm::rotate(view, glm::radians(roll), glm::vec3(0.0f, 0.0f, 1.0f));
+    view = glm::rotate(view, glm::radians(-rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    view = glm::rotate(view, glm::radians(-rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    view = glm::rotate(view, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
     forward = glm::vec3(view * glm::vec4(glm::vec3(0.0, 0.0, -1.0), 0.0));
     up = glm::vec3(view * glm::vec4(glm::vec3(0.0, 1.0, 0.0), 0.0));

@@ -9,6 +9,9 @@ out vec4 FragColor;
 uniform sampler2D color;
 uniform sampler2D depth;
 
+uniform sampler2D shadowMap;
+uniform mat4 lightSpace;
+
 uniform mat4 projection;
 uniform mat4 view;
 uniform vec3 camera;
@@ -27,7 +30,7 @@ ivec2 textureSize = textureSize(color, 0);
 vec2 texelSize = 1.0 / vec2(textureSize);
 
 float near = 0.1;
-float far = 500.0;
+float far = 80.0;
 
 float fogDistance = 400.0;
 
@@ -67,7 +70,7 @@ vec3 bloom(vec3 original, vec2 position, sampler2D sampler) {
 }
 
 vec3 worldPosition(vec2 uv, float depth) {
-    vec4 boxPos = vec4(uv * 2.0 - 1.0, depth, 1.0);
+    vec4 boxPos = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
     vec4 pos = inverse(projection * view) * boxPos;
     return pos.xyz / pos.w;
 }
@@ -89,6 +92,36 @@ vec3 fog(vec3 original, vec3 pos) {
     return fogged;
 }
 
+vec3 shadow(vec3 original, vec3 pos) {
+    vec4 position = lightSpace * vec4(pos, 1.0);
+    vec3 projCoords = position.xyz / position.w;
+
+    projCoords = projCoords * 0.5 + 0.5;
+
+    float currentDepth = projCoords.z;
+
+    float bias = 0.005;
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    for(int x = -2; x <= 2; ++x)
+    {
+        for(int y = -2; y <= 2; ++y)
+        {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 25.0;
+
+    if(projCoords.z > 1.0 || projCoords.z < 0.0) {
+        shadow = 0.0;
+    }
+
+    shadow = clamp(shadow, 0.0, 0.8);
+
+    return (1.0 - shadow) * original;
+}
+
 void main() {
     vec3 original = texture(color, TexCoord).xyz;
 
@@ -98,5 +131,20 @@ void main() {
     vec3 pos = worldPosition(TexCoord, texture(depth, TexCoord).x);
     vec3 fogged = fog(bloomed, pos);
 
-    FragColor = vec4(fogged, 1.0);
+    vec3 shadowed = shadow(fogged, pos);
+
+    vec4 position = lightSpace * vec4(pos, 1.0);
+    vec3 projCoords = position.xyz / position.w;
+
+    projCoords = projCoords * 0.5 + 0.5;
+
+//    if (projCoords.x > 0 && projCoords.x < 1.0 && projCoords.y > 0 && projCoords.y < 1.0 && projCoords.z > 0 && projCoords.z < 1.0) {
+//        FragColor = vec4(projCoords.xy, 0.0, 1.0);
+//        FragColor = vec4(vec3(texture(shadowMap, projCoords.xy).r), 1.0);
+//    }
+//    else{
+//        FragColor = vec4(shadowed, 1.0);
+//    }
+//    FragColor = vec4(vec3(texture(shadowMap, TexCoord).r), 1.0);
+    FragColor = vec4(shadowed, 1.0);
 }

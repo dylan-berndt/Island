@@ -10,6 +10,8 @@ public:
     static glm::mat4 perspective;
     static glm::mat4 view;
 
+    static glm::mat4 lightSpace;
+
     static glm::vec3 camera;
 
     void openShader(const std::string& name, int type) const;
