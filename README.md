@@ -23,6 +23,13 @@ other graphics programming projects.
   * HDR Bloom
   * Depth-based fog
  
+## To-do
+
+* Shadows
+* Normal mapping
+* Specular mapping
+* Schlick-Fresnel lighting/reflections
+ 
 ## 1/12/24
 
 Made some changes to effects and a few QoL improvements. Changed model loading to support more vertices and objects. 
