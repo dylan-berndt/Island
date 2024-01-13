@@ -29,6 +29,12 @@ other graphics programming projects.
 * Normal mapping
 * Specular mapping
 * Schlick-Fresnel lighting/reflections
+
+## 1/13/24
+
+Began implementing shadows through depth based approach in post-processing rather than typical fragment shader implementations.
+
+![ezgif-5-c1bffe9675](https://github.com/dylan-berndt/Island/assets/33700799/d3e0acff-94d5-4f17-a9ff-3cb30e9d4350)
  
 ## 1/12/24
 
