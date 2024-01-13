@@ -16,6 +16,7 @@ other graphics programming projects.
 * PBR
   * Blinn-Phong shading
   * Environment reflections
+  * Orthographic directional shadows
 * Fluid simulation
   * Sum of sines method
   * Central Difference normals
