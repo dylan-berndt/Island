@@ -17,6 +17,7 @@ other graphics programming projects.
   * Blinn-Phong shading
   * Environment reflections
   * Orthographic directional shadows
+  * Normal Mapping
 * Fluid simulation
   * Sum of sines method
   * Central Difference normals
@@ -26,9 +27,10 @@ other graphics programming projects.
  
 ## To-do
 
-* Normal mapping
 * Specular mapping
 * Schlick-Fresnel lighting/reflections
+* Scene management system
+* Debugging tools
 
 ## 1/13/24
 
