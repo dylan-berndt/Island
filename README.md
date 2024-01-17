@@ -39,6 +39,10 @@ Next to work on is scene management and debugging to standardize the rendering p
 
 ![ezgif-4-2a72554f60](https://github.com/dylan-berndt/Island/assets/33700799/1d4f7039-7e3f-4d19-80aa-f910707a66ba)
 
+An orthographic render for fun.
+
+![ezgif-7-2594a46554](https://github.com/dylan-berndt/Island/assets/33700799/379823ba-61f2-4718-a214-cf27825931e8)
+
 ## 1/13/24
 
 Began implementing shadows through depth based approach in post-processing rather than typical fragment shader implementations.
