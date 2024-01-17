@@ -32,6 +32,13 @@ other graphics programming projects.
 * Scene management system
 * Debugging tools
 
+## 1/17/24
+
+Normal mapping finally implemented, and some big behind the scenes changes to Materials, Textures, Models, and texture loading.
+Next to work on is scene management and debugging to standardize the rendering pipeline for future projects.
+
+![ezgif-4-2a72554f60](https://github.com/dylan-berndt/Island/assets/33700799/1d4f7039-7e3f-4d19-80aa-f910707a66ba)
+
 ## 1/13/24
 
 Began implementing shadows through depth based approach in post-processing rather than typical fragment shader implementations.
