@@ -31,11 +31,12 @@ other graphics programming projects.
 * Schlick-Fresnel lighting/reflections
 * Scene management system
 * Debugging tools
+* Text rendering
 
 ## 1/17/24
 
 Normal mapping finally implemented, and some big behind the scenes changes to Materials, Textures, Models, and texture loading.
-Next to work on is scene management and debugging to standardize the rendering pipeline for future projects.
+Next to work on is scene management, text rendering, and debugging to standardize the rendering pipeline for future projects.
 
 ![ezgif-4-2a72554f60](https://github.com/dylan-berndt/Island/assets/33700799/1d4f7039-7e3f-4d19-80aa-f910707a66ba)
 
