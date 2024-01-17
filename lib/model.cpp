@@ -9,6 +9,42 @@ struct FaceVertex {
     int nIndex;
 };
 
+Texture2D loadTexture(string directory, string line) {
+    istringstream iss(line);
+    string parse;
+
+    glm::vec3 scale = glm::vec3(1.0);
+    glm::vec3 offset = glm::vec3(0.0);
+    float bumpMultiplier = 1.0;
+    string name;
+
+    iss >> parse;
+
+    while (iss >> parse) {
+        if (parse == "-bm") {
+            iss >> bumpMultiplier;
+        }
+        else if (parse == "-s") {
+            iss >> scale.x >> scale.y >> scale.z;
+        }
+        else if (parse == "-o") {
+            iss >> offset.x >> offset.y >> offset.z;
+        }
+        else if (parse[0] != '-') {
+            getline(iss, name);
+            name = parse + name;
+        }
+    }
+
+//    cout << directory + name << endl;
+//    cout << scale.x << " " << scale.y << " " << scale.z << endl;
+//    cout << offset.x << " " << offset.y << " " << offset.z << endl << endl;
+
+    Texture2D texture((directory + name).c_str());
+    texture.scale = scale; texture.offset = offset; texture.bumpMultiplier = bumpMultiplier;
+    return texture;
+}
+
 void Model::loadModel(string path) {
     directory = path.substr(0, path.find_last_of('/')) + "/";
 
@@ -217,33 +253,25 @@ vector<Material> Model::loadMaterials(string file) {
         if (type == "Kd") {
             float x, y, z;
             iss >> x >> y >> z;
-            mat.baseColor = glm::vec3(x, y, z);
+            mat.setVec3("baseColor", glm::vec3(x, y, z));
         }
         else if (type == "Ka") {
             float x, y, z;
             iss >> x >> y >> z;
-            mat.specularColor = glm::vec3(x, y, z);
+            mat.setVec3("specularColor", glm::vec3(x, y, z));
         }
         else if (type == "Ke") {
             float x, y, z;
             iss >> x >> y >> z;
-            mat.emissiveColor = glm::vec3(x, y, z);
+            mat.setVec3("emissiveColor", glm::vec3(x, y, z));
         }
 
         else if (type == "map_Kd") {
-            int space = line.find_first_of(' ');
-            string textureName = line.substr(space + 1, line.length() - space + 1);
-
-            Texture2D baseTexture((directory + textureName).c_str());
-            mat.baseTexture = baseTexture;
+            mat.setTexture2D("baseTexture", loadTexture(directory, line));
         }
 
-        else if (type == "map_Bump") {
-            int space = line.find_first_of(' ');
-            string textureName = line.substr(space + 1, line.length() - space + 1);
-
-            Texture2D normalTexture((directory + textureName).c_str());
-            mat.normalTexture = normalTexture;
+        else if (type == "map_Bump" || type == "map_bump") {
+            mat.setTexture2D("bumpTexture", loadTexture(directory, line));
         }
 
         else if (type == "newmtl") {

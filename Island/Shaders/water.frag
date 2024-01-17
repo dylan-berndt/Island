@@ -82,7 +82,6 @@ void main() {
 
     result = mix(result, skyReflection, 0.5);
 
-    vec3 general = normal(FragPos.xz, 0.05, 1.0);
     float height = max(getWaves(FragPos.xz) - 0.4, -0.2);
 
     result += vec3(1.0, 1.0, 1.0) * height;

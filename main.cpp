@@ -6,6 +6,9 @@ using namespace std;
 #define WIDTH (1920 * 3 / 4)
 #define HEIGHT (1080 * 3 / 4)
 
+//#define WIDTH 1920
+//#define HEIGHT 1080
+
 #define SHADOW_WIDTH (2048)
 #define SHADOW_HEIGHT (2048)
 
@@ -51,17 +54,19 @@ int main() {
     glEnable(GL_CULL_FACE);
 
     glEnable(GL_BLEND);
-
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     World::camera = Camera(glm::vec3(0.0, 4.0, 20.0), glm::vec3(0.0));
     ShaderProgram::perspective = glm::perspective(glm::radians(60.0f), float(WIDTH) / float(HEIGHT), 0.1f, 500.0f);
+//    ShaderProgram::perspective = glm::ortho(-40.0f, 40.0f, -20.0f, 20.0f, 0.1f, 500.0f);
 
-    glm::mat4 lightProjection = glm::ortho(-40.0f, 40.0f, -20.0f, 20.0f, 0.1f, 80.0f);
+    glm::mat4 lightProjection = glm::ortho(-40.0f, 40.0f, -40.0f, 40.0f, 0.1f, 80.0f);
     glm::mat4 lightView = glm::lookAt(glm::vec3(-15.0f, 15.0f, -15.0f),
                                       glm::vec3( 0.0f, 0.0f,  0.0f),
                                       glm::vec3( 0.0f, 1.0f,  0.0f));
     ShaderProgram::lightSpace = lightProjection * lightView;
+    ShaderProgram::width = WIDTH;
+    ShaderProgram::height = HEIGHT;
 
     Square screen;
 
@@ -106,11 +111,11 @@ int main() {
     Model island("../Island/Models/Island/island.obj");
     Model crab("../Island/Models/Crab/10012_crab_v2_iterations-1.obj");
     Model palm("../Island/Models/Palm Plant/Palm_01.obj");
-    Model tree("../Island/Models/Palm Tree/CoconutPalm.obj");
+    Model tree("../Island/Models/Palm 2/Palm_1.obj");
 
     crab.transform(glm::vec3(0.0, 2.0, 0.0), glm::vec3(-90.0, 0.0, 0.0), glm::vec3(0.125));
     palm.transform(glm::vec3(-4.0, 1.8, 4.0), glm::vec3(0.0), glm::vec3(0.25));
-    tree.transform(glm::vec3(2.0, 0.4, -4.0), glm::vec3(-90.0, 0.0, 0.0), glm::vec3(0.125));
+    tree.transform(glm::vec3(2.0, 1.6, -4.0), glm::vec3(0.0), glm::vec3(0.01875));
 
     Model rock_10("../Island/Models/Rocks/10/moss rock 10.obj");
     Model rock_12("../Island/Models/Rocks/12/moss rock 12.obj");
@@ -148,9 +153,13 @@ int main() {
     glReadBuffer(GL_NONE);
     shadow_buffer.unbind();
 
+    screen.material.setTexture2D("color", color_texture);
+    screen.material.setTexture2D("depth", depth_texture);
+    screen.material.setTexture2D("shadowMap", shadow_texture);
+
     while (!glfwWindowShouldClose(win)) {
         delta = glfwGetTime() - last_time;
-        cout << "Approx. FPS: " << 1.0 / delta << endl;
+//        cout << "Approx. FPS: " << 1.0 / delta << endl;
         last_time = glfwGetTime();
 
         update();
@@ -199,9 +208,6 @@ int main() {
 
         default_shader.use();
 
-        shadow_texture.activate(GL_TEXTURE2);
-        default_shader.setInt("shadowMap", 2);
-
         island.draw(default_shader);
         crab.draw(default_shader);
         palm.draw(default_shader);
@@ -211,9 +217,7 @@ int main() {
         rock_13.draw(default_shader);
         rock_14.draw(default_shader);
 
-        glDisable(GL_CULL_FACE);
         tree.draw(default_shader);
-        glEnable(GL_CULL_FACE);
 
         default_shader.stop();
 
@@ -225,15 +229,7 @@ int main() {
 
         post_shader.use();
 
-        depth_texture.activate(GL_TEXTURE0);
-        color_texture.activate(GL_TEXTURE1);
-        shadow_texture.activate(GL_TEXTURE2);
-
-        post_shader.setInt("depth", 0);
-        post_shader.setInt("color", 1);
-        post_shader.setInt("shadowMap", 2);
-
-        post_shader.setInt("kernelSize", bloomKernelSize);
+        post_shader.setInt("bloomKernelSize", bloomKernelSize);
 
         screen.draw(post_shader);
 

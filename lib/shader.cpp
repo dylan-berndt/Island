@@ -9,6 +9,8 @@ glm::mat4 ShaderProgram::perspective;
 glm::mat4 ShaderProgram::view;
 glm::mat4 ShaderProgram::lightSpace;
 glm::vec3 ShaderProgram::camera;
+int ShaderProgram::width;
+int ShaderProgram::height;
 
 ShaderProgram::ShaderProgram() {
     unsigned int s;
@@ -57,6 +59,8 @@ void ShaderProgram::compile() const {
 void ShaderProgram::use() const {
     glUseProgram(self);
 
+    setInt("width", ShaderProgram::width);
+    setInt("height", ShaderProgram::height);
     setMat4("projection", ShaderProgram::perspective);
     setMat4("view", ShaderProgram::view);
     setMat4("lightSpace", ShaderProgram::lightSpace);
@@ -78,6 +82,10 @@ void ShaderProgram::setInt(const string& name, int value) const {
 
 void ShaderProgram::setFloat(const string& name, float value) const {
     glUniform1f(glGetUniformLocation(self, name.c_str()), value);
+}
+
+void ShaderProgram::setVec2(const string& name, glm::vec2 value) const {
+    glUniform2fv(glGetUniformLocation(self, name.c_str()), 1, glm::value_ptr(value));
 }
 
 void ShaderProgram::setVec3(const string& name, glm::vec3 value) const {

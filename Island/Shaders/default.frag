@@ -7,66 +7,62 @@ out vec4 FragColor;
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoords;
+in vec3 Tangent;
 
-in vec4 ShadowPos;
-
+uniform mat4 projection;
 uniform mat4 model;
 uniform mat4 view;
 uniform vec3 camera;
 
-uniform vec3 lightColor = vec3(1.0, 1.0, 1.0);
-
 uniform mat4 lightSpace;
 uniform sampler2D shadowMap;
 
+uniform int width;
+uniform int height;
+
+uniform vec3 lightColor = vec3(1.0, 1.0, 1.0);
+
 uniform vec3 baseColor = vec3(1.0, 0.0, 1.0);
 
-uniform sampler2D baseTexture;
+struct Texture {
+    sampler2D id;
+    vec3 offset;
+    vec3 scale;
+    float bumpMultiplier;
+};
 
-float shadowCalc(vec4 position) {
-    vec3 projCoords = position.xyz / position.w;
-
-    projCoords = projCoords * 0.5 + 0.5;
-
-    float currentDepth = projCoords.z;
-
-    float bias = 0.0001;
-    float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-    for(int x = -2; x <= 2; ++x)
-    {
-        for(int y = -2; y <= 2; ++y)
-        {
-            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
-            shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
-        }
-    }
-    shadow /= 25.0;
-
-    if(projCoords.z > 1.0) {
-        shadow = 0.0;
-    }
-
-    return shadow;
-}
+uniform Texture baseTexture;
+uniform Texture bumpTexture;
 
 void main() {
+    vec2 baseTransformCoords = baseTexture.scale.xy * (TexCoords + baseTexture.offset.xy);
+    vec2 bumpTransformCoords = bumpTexture.scale.xy * (TexCoords + bumpTexture.offset.xy);
+
+    if (texture(baseTexture.id, baseTransformCoords).a < 0.01) {
+        discard;
+    }
+
     vec3 ambient = AMBIENT * lightColor;
 
     vec3 lightDir = LIGHT_DIRECTION;
 
+    vec3 bitangent = cross(Normal, Tangent);
+    mat3 tbn = mat3(Tangent, bitangent, Normal);
+
+    vec3 texNormal = texture(bumpTexture.id, bumpTransformCoords).xyz;
+    texNormal = texNormal * 2.0 - 1.0;
+    vec3 normal = tbn * (texNormal * bumpTexture.bumpMultiplier);
+
     float specularStrength = 1.0;
     vec3 viewDir = normalize(camera - FragPos);
-    vec3 reflectDir = reflect(lightDir, Normal);
+    vec3 reflectDir = reflect(lightDir, normal);
 
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
     vec3 specular = specularStrength * spec * lightColor;
 
-    float diffuse = max(dot(Normal, -lightDir), 0.0);
+    float diffuse = max(dot(normal, -lightDir), 0.0);
 
-//    float shadow = shadowCalc(ShadowPos);
-    float shadow = 0.0;
-    vec4 res = vec4(ambient + (1.0 - shadow) * (diffuse + specular), 1.0) * texture(baseTexture, TexCoords);
+    vec4 res = vec4(ambient + diffuse + specular, 1.0) * texture(baseTexture.id, baseTransformCoords);
 
     FragColor = res;
 }

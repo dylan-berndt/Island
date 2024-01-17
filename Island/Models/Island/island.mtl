@@ -9,5 +9,5 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.450000
 d 1.000000
 illum 3
-map_Kd Sand_005_baseColor.jpg
-map_Bump -s 4 4 1 -bm 1.000000 C:/Users/rapto/Downloads/Sand_005_normal.jpg
+map_Kd -s 4 4 1 Sand_005_baseColor.jpg
+map_bump -s 4 4 1 Sand_005_normal.jpg

@@ -23,15 +23,11 @@ public:
     glm::vec3 position;
     glm::vec3 normal;
     glm::vec2 texCoord;
-    glm::vec3 color = glm::vec3(0, 0, 0);
+    glm::vec3 tangent = glm::vec3(0.0, 0.0, 0.0);
 };
 
 class Material {
 public:
-    glm::vec3 baseColor = glm::vec3(1.0, 0.0, 1.0);
-    glm::vec3 specularColor = glm::vec3(1.0, 0.0, 1.0);
-    glm::vec3 emissiveColor = glm::vec3(1.0, 0.0, 1.0);
-
     float roughness = 0.0f;
     float glossiness = 0.0f;
     float metallic = 0.0f;
@@ -39,18 +35,35 @@ public:
     float transparency = 0.0f;
 
     Texture2D opacityTexture;
-    Texture2D normalTexture;
     Texture2D emissiveTexture;
     Texture2D ambientOcclusionTexture;
     Texture2D metallicTexture;
     Texture2D glossinessTexture;
     Texture2D roughnessTexture;
-    Texture2D baseTexture;
     Texture2D specularTexture;
 
     std::string name = "";
 
-    Material() {};
+    void setBool(std::string name, bool value) {booleans.insert(std::pair<std::string, bool>(name, value));};
+    void setInt(std::string name, int value) {integers.insert(std::pair<std::string, int>(name, value));};
+    void setFloat(std::string name, float value) {floats.insert(std::pair<std::string, float>(name, value));};
+    void setVec3(std::string name, glm::vec3 value) {vec3s.insert(std::pair<std::string, glm::vec3>(name, value));};
+    void setVec2(std::string name, glm::vec2 value) {vec2s.insert(std::pair<std::string, glm::vec2>(name, value));};
+    void setMat4(std::string name, glm::mat4 value) {mat4s.insert(std::pair<std::string, glm::mat4>(name, value));};
+    void setTexture2D(std::string name, Texture2D value) {textures.insert(std::pair<std::string, Texture2D>(name, value));};
+
+    void use(ShaderProgram &shader);
+
+    Material() = default;
+
+private:
+    std::map<std::string, bool> booleans;
+    std::map<std::string, int> integers;
+    std::map<std::string, float> floats;
+    std::map<std::string, glm::vec3> vec3s;
+    std::map<std::string, glm::vec2> vec2s;
+    std::map<std::string, Texture2D> textures;
+    std::map<std::string, glm::mat4> mat4s;
 };
 
 class Mesh {
@@ -65,6 +78,8 @@ public:
     void bind() {glBindVertexArray(VAO);};
 
     void resetMesh(std::vector<Vertex>, std::vector<int>);
+
+    void calculateTangents();
 
     Mesh(std::vector<Vertex>, std::vector<int>);
     void draw(ShaderProgram&);

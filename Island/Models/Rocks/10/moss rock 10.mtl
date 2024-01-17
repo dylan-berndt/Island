@@ -1,2 +1,3 @@
 newmtl moss_rock_10
 map_Kd moss rock 10 (4096).jpg
+map_bump -bm -1.0 moss rock 10_normal.jpg

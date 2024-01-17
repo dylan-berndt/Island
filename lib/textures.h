@@ -10,8 +10,13 @@ public:
     void create(int w, int h, int t = GL_RGB, unsigned char* d = nullptr, int dtype=GL_UNSIGNED_BYTE);
     void bind() const;
     static void unbind();
+
     int width;
     int height;
+    glm::vec3 offset = glm::vec3(0.0);
+    glm::vec3 scale = glm::vec3(1.0);
+    float bumpMultiplier = 1.0;
+
     unsigned int id() const {return self;};
     Texture2D(int w, int h, int t = GL_RGB, int dtype=GL_UNSIGNED_BYTE);
     explicit Texture2D(const char* name);
