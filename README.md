@@ -17,6 +17,7 @@ other graphics programming projects.
   * Blinn-Phong shading
   * Environment reflections
   * Orthographic directional shadows
+  * Normal Mapping
 * Fluid simulation
   * Sum of sines method
   * Central Difference normals
@@ -26,9 +27,22 @@ other graphics programming projects.
  
 ## To-do
 
-* Normal mapping
 * Specular mapping
 * Schlick-Fresnel lighting/reflections
+* Scene management system
+* Debugging tools
+* Text rendering
+
+## 1/17/24
+
+Normal mapping finally implemented, and some big behind the scenes changes to Materials, Textures, Models, and texture loading.
+Next to work on is scene management, text rendering, and debugging to standardize the rendering pipeline for future projects.
+
+![ezgif-4-2a72554f60](https://github.com/dylan-berndt/Island/assets/33700799/1d4f7039-7e3f-4d19-80aa-f910707a66ba)
+
+An orthographic render for fun.
+
+![ezgif-7-2594a46554](https://github.com/dylan-berndt/Island/assets/33700799/379823ba-61f2-4718-a214-cf27825931e8)
 
 ## 1/13/24
 
