@@ -3,36 +3,63 @@
 #ifndef PIPE_PIPE_H
 #define PIPE_PIPE_H
 
-#include "back.h"
-#include "model.h"
+#include "imports.h"
+#include "components.h"
 
-void initialize(glm::vec3 camera, float FOV, int width, int height, float near = 0.1f, float far = 500.0f);
+void loadScene(std::string sceneName);
 
-void update();
+void initialize(std::string configName, std::string sceneName);
 
-class Camera {
+void update(float &delta);
+
+std::vector<glm::mat4> getLightSpaceMatrices();
+
+class Scene {
 public:
-    glm::vec3 position;
+    std::vector<Entity> entities;
+    glm::vec3 lightDirection;
+    Camera camera;
 
-    glm::vec3 forward;
-    glm::vec3 up;
-    glm::vec3 right;
-
-    glm::vec3 rotation;
-
-    void rotateByMouse(double dx, double dy);
-    glm::mat4 getView();
-
-    Camera(glm::vec3 position, glm::vec3 rotation);
-    Camera() {position = glm::vec3(0.0); rotation = glm::vec3(0.0);};
-
-private:
-    void getRotation();
+    Scene(const std::string sceneName);
+    Scene() {entities = std::vector<Entity>(); lightDirection = glm::vec3(1.0);};
 };
 
 class World {
 public:
     static Camera camera;
+    static Scene scene;
+    static glm::vec3 lightDirection;
+};
+
+class Window {
+public:
+    static int width;
+    static int height;
+    static std::string name;
+    static GLFWwindow* self;
+
+    static void draw();
+
+    static void frameBufferSizeCallback(GLFWwindow *win, int width, int height);
+
+    static void initializePostProcessing();
+    static void attachPostProcessingTexture(Texture2D tex, int attachment) {
+        postProcessingBuffer->attachTexture2D(attachment, tex);
+    };
+
+    static void blit() {
+        screen->draw(*ShaderProgram::postShader);
+    };
+
+private:
+    static Square *screen;
+    static FrameBuffer *postProcessingBuffer;
+    static FrameBuffer *shadowBuffer;
+    static Texture2D *colorTexture;
+    static Texture2D *depthTexture;
+    static Texture2DArray *shadowTexture;
+
+    static unsigned int lightMatricesUBO;
 };
 
 #endif //PIPE_PIPE_H

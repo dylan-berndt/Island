@@ -1,0 +1,46 @@
+# Blender 4.0.2 MTL File: 'island3.blend'
+# www.blender.org
+
+newmtl Material
+Ns 0.000000
+Ka 0.645455 0.645455 0.645455
+Ks 0.513636 0.513636 0.513636
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd -s 4 4 1 Sand_005_baseColor.jpg
+map_Bump -s 4 4 1 -bm 1.000000 Sand_005_normal.jpg
+
+newmtl moss_rock_10
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd moss rock 10 (4096).jpg
+map_Bump moss rock 10_normal (4096).png
+
+newmtl moss_rock_13
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd moss rock 13 (4096).jpg
+map_Bump moss rock 13_normal (4096).png
+
+newmtl moss_rock_14
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd moss rock 14 (4096).jpg
+map_Bump moss rock 14_normal (4096).png

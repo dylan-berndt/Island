@@ -3,237 +3,64 @@
 
 using namespace std;
 
-#define WIDTH (1920 * 3 / 4)
-#define HEIGHT (1080 * 3 / 4)
-
-//#define WIDTH 1920
-//#define HEIGHT 1080
-
-#define SHADOW_WIDTH (2048)
-#define SHADOW_HEIGHT (2048)
-
 int bloomKernelSize = 4;
-
-int screen_width = WIDTH;
-int screen_height = HEIGHT;
-
-float delta = 0;
-double last_time = 0;
 
 void cursorPosCallback(GLFWwindow *window, double xpos, double ypos);
 
 void keyPress(GLFWwindow *window);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
-void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+float delta;
 
 int main() {
-    if (!glfwInit()) {
-        cout << "Can't Initialize GLFW" << endl;
-        exit (EXIT_FAILURE);
-    }
+    initialize("../Island/config.txt", "../Island/Scenes/island.scene");
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwSetKeyCallback(Window::self, keyCallback);
+    glfwSetCursorPosCallback(Window::self, cursorPosCallback);
 
-    GLFWwindow *win;
-    win = glfwCreateWindow(WIDTH, HEIGHT, "Water Demo", nullptr, nullptr);
-    glfwMakeContextCurrent(win);
-
-    gladLoadGL();
-
-    glViewport(0, 0, WIDTH, HEIGHT);
-
-    glfwSetFramebufferSizeCallback(win, framebufferSizeCallback);
-    glfwSetKeyCallback(win, keyCallback);
-    glfwSetCursorPosCallback(win, cursorPosCallback);
-    glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    World::camera = Camera(glm::vec3(0.0, 4.0, 20.0), glm::vec3(0.0));
-    ShaderProgram::perspective = glm::perspective(glm::radians(60.0f), float(WIDTH) / float(HEIGHT), 0.1f, 500.0f);
 //    ShaderProgram::perspective = glm::ortho(-40.0f, 40.0f, -20.0f, 20.0f, 0.1f, 500.0f);
 
-    glm::mat4 lightProjection = glm::ortho(-40.0f, 40.0f, -40.0f, 40.0f, 0.1f, 80.0f);
-    glm::mat4 lightView = glm::lookAt(glm::vec3(-15.0f, 15.0f, -15.0f),
-                                      glm::vec3( 0.0f, 0.0f,  0.0f),
-                                      glm::vec3( 0.0f, 1.0f,  0.0f));
-    ShaderProgram::lightSpace = lightProjection * lightView;
-    ShaderProgram::width = WIDTH;
-    ShaderProgram::height = HEIGHT;
+    ShaderProgram::width = Window::width;
+    ShaderProgram::height = Window::height;
 
-    Square screen;
+    ShaderProgram water_shader("../Island/Shaders/water");
+    ShaderProgram post_shader("../Island/Shaders/post");
 
-    int amount = 800;
-    Mesh water = flatMesh(amount, amount);
-    water.model = glm::translate(water.model, glm::vec3(0.0, -1.5, 0.0));
-    water.model = glm::scale(water.model, glm::vec3(400.0, 1.0, 400.0));
-
-    ShaderProgram water_shader;
-    water_shader.openShader("../Island/Shaders/water.vert", GL_VERTEX_SHADER);
-    water_shader.openShader("../Island/Shaders/water.frag", GL_FRAGMENT_SHADER);
-    water_shader.compile();
-
-    ShaderProgram post_shader;
-    post_shader.openShader("../Island/Shaders/post.vert", GL_VERTEX_SHADER);
-    post_shader.openShader("../Island/Shaders/post.frag", GL_FRAGMENT_SHADER);
-    post_shader.compile();
-
-    ShaderProgram default_shader;
-    default_shader.openShader("../Island/Shaders/default.vert", GL_VERTEX_SHADER);
-    default_shader.openShader("../Island/Shaders/default.frag", GL_FRAGMENT_SHADER);
-    default_shader.compile();
-
-    ShaderProgram skybox_shader;
-    skybox_shader.openShader("../Island/Shaders/skybox.vert", GL_VERTEX_SHADER);
-    skybox_shader.openShader("../Island/Shaders/skybox.frag", GL_FRAGMENT_SHADER);
-    skybox_shader.compile();
-
-    ShaderProgram shadow_shader;
-    shadow_shader.openShader("../Island/Shaders/shadow.vert", GL_VERTEX_SHADER);
-    shadow_shader.openShader("../Island/Shaders/shadow.frag", GL_FRAGMENT_SHADER);
-    shadow_shader.compile();
+    ShaderProgram::postShader = &post_shader;
 
     vector<string> faces = {"../Island/Sky/bluecloud_rt.jpg", "../Island/Sky/bluecloud_lf.jpg",
-                            "../Island/Sky/bluecloud_up.jpg", "../Island/Sky/bluecloud_dn.jpg",
+                            "../Island/Sky/bluecloud_dn.jpg", "../Island/Sky/bluecloud_up.jpg",
                             "../Island/Sky/bluecloud_bk.jpg", "../Island/Sky/bluecloud_ft.jpg"};
 
     CubeMap skyMap(faces);
+
     SkyBox sky(skyMap);
-    sky.model = glm::rotate(glm::mat4(1.0), glm::radians(-135.0f), glm::vec3(0.0, 1.0, 0.0));
+    Transform skyRotate(glm::vec3(0.0), glm::vec3(0.0, -135.0f, 0.0), glm::vec3(1.0));
+    Entity skybox("skybox", &skyRotate);
+    MeshComponent<SkyBox> skyMesh(sky, *ShaderProgram::skyboxShader);
+    skybox.addComponent(&skyMesh);
 
-    Model island("../Island/Models/Island/island.obj");
-    Model crab("../Island/Models/Crab/10012_crab_v2_iterations-1.obj");
-    Model palm("../Island/Models/Palm Plant/Palm_01.obj");
-    Model tree("../Island/Models/Palm 2/Palm_1.obj");
+    int amount = 400;
+    Mesh waterMesh = flatMesh(amount, amount);
+    Transform *waterTransform = new Transform(glm::vec3(0.0, -2.5, 0.0), glm::vec3(0.0), glm::vec3(400.0, 1.0, 400.0));
+    Entity water("water", waterTransform);
+    MeshComponent<Mesh> mesh(waterMesh, water_shader);
+    mesh.getMaterial().setCubeMap("sky", skyMap);
+    water.addComponent(&mesh);
 
-    crab.transform(glm::vec3(0.0, 2.0, 0.0), glm::vec3(-90.0, 0.0, 0.0), glm::vec3(0.125));
-    palm.transform(glm::vec3(-4.0, 1.8, 4.0), glm::vec3(0.0), glm::vec3(0.25));
-    tree.transform(glm::vec3(2.0, 1.6, -4.0), glm::vec3(0.0), glm::vec3(0.01875));
+    cout << "Total vertices: " << Mesh::totalVertices << endl;
 
-    Model rock_10("../Island/Models/Rocks/10/moss rock 10.obj");
-    Model rock_12("../Island/Models/Rocks/12/moss rock 12.obj");
-    Model rock_13("../Island/Models/Rocks/13/moss rock 13.obj");
-    Model rock_14("../Island/Models/Rocks/14/moss rock 14.obj");
+    while (!glfwWindowShouldClose(Window::self)) {
+        update(delta);
 
-    rock_10.transform(Transform(glm::vec3(10.0, 2.0, -10.0)));
-    rock_12.transform(Transform(glm::vec3(-10.0, 2.0, -10.0)));
-    rock_13.transform(Transform(glm::vec3(-10.0, 2.0, 10.0)));
-    rock_14.transform(Transform(glm::vec3(10.0, 2.0, 10.0)));
+        water.transform()->position.x = float(int(World::camera.position.x / 2.0f)) * 2.0f;
+        water.transform()->position.z = float(int(World::camera.position.z / 2.0f)) * 2.0f;
 
-    FrameBuffer after_effects_buffer;
+        ShaderProgram::postShader->use();
+        ShaderProgram::postShader->setInt("bloomKernelSize", bloomKernelSize);
+        ShaderProgram::postShader->stop();
 
-    Texture2D color_texture(WIDTH, HEIGHT, GL_RGB);
-    Texture2D depth_texture(WIDTH, HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT);
-
-    after_effects_buffer.attachTexture2D(GL_COLOR_ATTACHMENT0, color_texture);
-    after_effects_buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, depth_texture);
-
-    FrameBuffer shadow_buffer;
-
-    Texture2D shadow_texture(SHADOW_WIDTH, SHADOW_HEIGHT, GL_DEPTH_COMPONENT, GL_FLOAT);
-    shadow_texture.bind();
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-    shadow_texture.unbind();
-
-    shadow_buffer.attachTexture2D(GL_DEPTH_ATTACHMENT, shadow_texture);
-    shadow_buffer.bind();
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    shadow_buffer.unbind();
-
-    screen.material.setTexture2D("color", color_texture);
-    screen.material.setTexture2D("depth", depth_texture);
-    screen.material.setTexture2D("shadowMap", shadow_texture);
-
-    while (!glfwWindowShouldClose(win)) {
-        delta = glfwGetTime() - last_time;
-//        cout << "Approx. FPS: " << 1.0 / delta << endl;
-        last_time = glfwGetTime();
-
-        update();
-
-        water.model[3][0] = float(int(World::camera.position.x));
-        water.model[3][2] = float(int(World::camera.position.z));
-
-        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        shadow_buffer.bind();
-
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        shadow_shader.use();
-
-        glDisable(GL_CULL_FACE);
-        island.draw(shadow_shader);
-        crab.draw(shadow_shader);
-        palm.draw(shadow_shader);
-        tree.draw(shadow_shader);
-
-        rock_10.draw(shadow_shader);
-        rock_12.draw(shadow_shader);
-        rock_13.draw(shadow_shader);
-        rock_14.draw(shadow_shader);
-
-        glEnable(GL_CULL_FACE);
-
-        shadow_shader.stop();
-
-        shadow_buffer.unbind();
-
-        glViewport(0, 0, WIDTH, HEIGHT);
-        after_effects_buffer.bind();
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        sky.draw(skybox_shader);
-
-        water_shader.use();
-
-        skyMap.bind();
-
-        water.draw(water_shader);
-
-        water_shader.stop();
-
-        default_shader.use();
-
-        island.draw(default_shader);
-        crab.draw(default_shader);
-        palm.draw(default_shader);
-
-        rock_10.draw(default_shader);
-        rock_12.draw(default_shader);
-        rock_13.draw(default_shader);
-        rock_14.draw(default_shader);
-
-        tree.draw(default_shader);
-
-        default_shader.stop();
-
-        after_effects_buffer.unbind();
-
-        glViewport(0, 0, screen_width, screen_height);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        post_shader.use();
-
-        post_shader.setInt("bloomKernelSize", bloomKernelSize);
-
-        screen.draw(post_shader);
-
-        post_shader.stop();
+        Window::draw();
 
         GLenum err = glGetError();
         if (err != GL_NO_ERROR) {
@@ -241,12 +68,12 @@ int main() {
         }
 
         glfwPollEvents();
-        keyPress(win);
+        keyPress(Window::self);
 
-        glfwSwapBuffers(win);
+        glfwSwapBuffers(Window::self);
     }
 
-    glfwDestroyWindow(win);
+    glfwDestroyWindow(Window::self);
     glfwTerminate();
 
     return 0;
@@ -264,9 +91,11 @@ void cursorPosCallback(GLFWwindow *window, double xpos, double ypos) {
 }
 
 float cameraSpeed = 10.0;
+float speedMultiplier = 4.0;
 
 void keyPress(GLFWwindow *window) {
     glm::vec3 groundAlignedForward = World::camera.forward;
+
     groundAlignedForward.y = 0.0;
     groundAlignedForward = glm::normalize(groundAlignedForward);
 
@@ -305,7 +134,7 @@ void keyPress(GLFWwindow *window) {
     float speed = cameraSpeed;
     state = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
     if (state == GLFW_PRESS) {
-        speed *= 2.0;
+        speed *= speedMultiplier;
     }
 
     if (movement.x != 0.0 || movement.y != 0.0 || movement.z != 0.0) {
@@ -343,10 +172,4 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 
         }
     }
-}
-
-void framebufferSizeCallback(GLFWwindow* window, int width, int height)
-{
-    screen_width = width;
-    screen_height = height;
 }

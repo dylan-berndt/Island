@@ -6,7 +6,7 @@ in vec3 FragPos;
 #define WATER_COLOR vec3(0.0, 0.05, 0.2)
 
 #define AMBIENT_LIGHT 0.5
-#define LIGHT_DIRECTION normalize(vec3(1.0, -1.0, 1.0))
+uniform vec3 lightDirection;
 
 uniform vec3 lightColor = vec3(1.0, 1.0, 1.0);
 uniform float time;
@@ -61,18 +61,16 @@ vec3 normal(vec2 pos, float e, float depth) {
 void main() {
     vec3 ambient = AMBIENT_LIGHT * lightColor;
 
-    vec3 lightDir = LIGHT_DIRECTION;
-
     vec3 normal = normal(FragPos.xz, 0.001, 1.0);
 
     float specularStrength = 1.0;
     vec3 viewDir = normalize(camera - FragPos);
-    vec3 reflectDir = reflect(lightDir, normal);
+    vec3 reflectDir = reflect(lightDirection, normal);
 
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 4);
     vec3 specular = specularStrength * spec * lightColor;
 
-    float diffuse = max(dot(normal, -lightDir), 0.0);
+    float diffuse = max(dot(normal, -lightDirection), 0.0);
 
     vec3 I = normalize(FragPos - camera);
     vec3 R = reflect(I, normalize(normal));
@@ -86,5 +84,5 @@ void main() {
 
     result += vec3(1.0, 1.0, 1.0) * height;
 
-    FragColor = vec4(result, 1.0); 
+    FragColor = vec4(result, 1.0);
 }

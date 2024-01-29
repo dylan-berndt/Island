@@ -1,0 +1,21 @@
+
+newmtl Frond
+	map_Kd frond stem.png
+	map_bump frond stem_normal.png
+
+newmtl Trunk_Bottom
+	map_Kd palm02.png
+	map_bump palm02_normal.png
+
+newmtl Leaves
+	map_Kd coconut palm leaf.png
+	map_bump coconut palm leaf_Normal.png
+
+newmtl Coconut
+	map_Kd coconut 2.png
+	map_bump coconut 2_normal.png
+
+newmtl Trunk_Top
+	map_Kd palm top.png
+	map_bump palm top_normal.png
+

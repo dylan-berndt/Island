@@ -1,3 +1,3 @@
 newmtl moss_rock_14
 map_Kd moss rock 14 (4096).jpg
-map_bump -bm -1.0 moss rock 14_normal.jpg
+map_bump -bm 1.0 moss rock 14_normal (4096).png

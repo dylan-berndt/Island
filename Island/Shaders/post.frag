@@ -10,13 +10,19 @@ struct Texture {
     sampler2D id;
     vec3 offset;
     vec3 scale;
+    float bumpMultiplier;
 };
 
 uniform Texture color;
 uniform Texture depth;
 
-uniform Texture shadowMap;
-uniform mat4 lightSpace;
+uniform sampler2DArray shadowMap;
+layout (std140) uniform LightSpaceMatrices
+{
+    mat4 lightSpaceMatrices[16];
+};
+uniform float cascadePlaneDistances[16];
+uniform int cascadeCount;
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -32,17 +38,12 @@ float bloomEffect = 0.5;
 uniform int bloomKernelSize = 4;
 float bloomKernelSizeMultiplier = 4.0;
 
-uniform int depthOfFieldKernelSize = 4;
-float depthOfFieldKernelSizeMultiplier = 4.0;
-uniform float depthOfFieldDistance = 10.0;
-uniform float depthOfFieldEffect = 0.6;
-
 ivec2 colorSize = textureSize(color.id, 0);
 
 vec2 colorTexelSize = 1.0 / vec2(colorSize);
 
 float near = 0.1;
-float far = 80.0;
+float far = 500.0;
 
 float linearDepth(float depth)
 {
@@ -100,26 +101,64 @@ vec3 fog(vec3 original, vec3 pos) {
     return fogged;
 }
 
+int getShadowLayer(vec3 pos) {
+    vec4 fragPosViewSpace = view * vec4(pos, 1.0);
+    float depthValue = abs(fragPosViewSpace.z);
+
+    int layer = -1;
+    for (int i = 0; i < cascadeCount; ++i)
+    {
+        if (depthValue < cascadePlaneDistances[i])
+        {
+            layer = i;
+            break;
+        }
+    }
+    if (layer == -1)
+    {
+        layer = cascadeCount;
+    }
+    return layer;
+}
+
 vec3 shadow(vec3 original, vec3 pos) {
-    vec4 position = lightSpace * vec4(pos, 1.0);
+    int layer = getShadowLayer(pos);
+
+    vec4 position = lightSpaceMatrices[layer] * vec4(pos, 1.0);
     vec3 projCoords = position.xyz / position.w;
 
     projCoords = projCoords * 0.5 + 0.5;
 
     float currentDepth = projCoords.z;
 
-    float bias = 0.005;
-    float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap.id, 0);
-    for(int x = -2; x <= 2; ++x)
+    if (currentDepth > 1.0) {
+        return original;
+    }
+
+    float bias = 0.0001;
+    const float biasModifier = 0.5f;
+    if (layer == cascadeCount)
     {
-        for(int y = -2; y <= 2; ++y)
+        bias *= 1 / (far * biasModifier);
+    }
+    else
+    {
+        bias *= 1 / (cascadePlaneDistances[layer] * biasModifier);
+    }
+
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
+
+    int shadowKernel = 5;
+    for(int x = -shadowKernel / 2; x <= shadowKernel / 2; ++x)
+    {
+        for(int y = -shadowKernel / 2; y <= shadowKernel / 2; ++y)
         {
-            float pcfDepth = texture(shadowMap.id, projCoords.xy + vec2(x, y) * texelSize).r;
+            float pcfDepth = texture(shadowMap, vec3(projCoords.xy + vec2(x, y) * texelSize, layer)).r;
             shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
         }
     }
-    shadow /= 25.0;
+    shadow /= float(shadowKernel * shadowKernel);
 
     if(projCoords.z > 1.0 || projCoords.z < 0.0) {
         shadow = 0.0;
@@ -130,58 +169,45 @@ vec3 shadow(vec3 original, vec3 pos) {
     return (1.0 - shadow) * original;
 }
 
-vec3 field(vec3 original, vec2 uv, vec3 pos) {
-    vec3 end = vec3(0);
-
-    float effect = abs(length(pos - camera) - depthOfFieldDistance) / 10.0;
-    effect = clamp(effect * depthOfFieldEffect, 0.0, 1.0);
-
-    for (int x = -depthOfFieldKernelSize / 2; x < depthOfFieldKernelSize / 2; x++) {
-        for (int y = -depthOfFieldKernelSize / 2; y < depthOfFieldKernelSize / 2; y++) {
-            vec2 sample_position = vec2(x, y) * depthOfFieldKernelSizeMultiplier * colorTexelSize + uv;
-            float gauss = gaussian(x, y, depthOfFieldKernelSize);
-            end += texture(color.id, sample_position).xyz * gauss;
-        }
-    }
-
-    return mix(original, end, effect);
-}
-
-mat4 bayer4x4 = mat4(0, 32, 8, 40,
-48, 16, 56, 24,
-12, 44, 4, 36,
-60, 28, 52, 5);
-
-mat2 bayer2x2 = mat2(0, 2,
-3, 1);
-
 void main() {
     vec3 original = texture(color.id, TexCoord).xyz;
     vec3 pos = worldPosition(TexCoord, texture(depth.id, TexCoord).x);
 
 //    vec3 depthOfField = field(original, TexCoord, pos);
 
-    vec3 bloomed = bloom(original, TexCoord, color);
+    vec3 shadowed = shadow(original, pos);
+
+    vec3 bloomed = bloom(shadowed, TexCoord, color);
 
     vec3 fogged = fog(bloomed, pos);
 
-    vec3 shadowed = shadow(fogged, pos);
-
-//    vec4 position = lightSpace * vec4(pos, 1.0);
+//    int layer = getShadowLayer(pos);
+//
+//    vec4 position = lightSpaceMatrices[layer] * vec4(pos, 1.0);
 //    vec3 projCoords = position.xyz / position.w;
 //
 //    projCoords = projCoords * 0.5 + 0.5;
 
 //    if (projCoords.x > 0 && projCoords.x < 1.0 && projCoords.y > 0 && projCoords.y < 1.0 && projCoords.z > 0 && projCoords.z < 1.0) {
 //        FragColor = vec4(projCoords.xy, 0.0, 1.0);
-//        FragColor = vec4(vec3(texture(shadowMap.id, projCoords.xy).r), 1.0);
+//        FragColor = vec4(vec3(texture(shadowMap, vec3(projCoords.xy, layer)).r), 1.0);
 //    }
 //    else{
 //        FragColor = vec4(shadowed, 1.0);
 //    }
-//    FragColor = vec4(vec3(texture(shadowMap.id, TexCoord).r), 1.0);
+//    FragColor = vec4(projCoords.xy, 0.0, 1.0);
+//    FragColor = vec4(float(layer) / float(cascadeCount), 0.0, 0.0, 1.0);
+//    FragColor = vec4(vec3(texture(shadowMap, vec3(projCoords.xy, layer)).r), 1.0);
 //    FragColor = vec4(fogged, 1.0);
 
-    FragColor = vec4(shadowed, 1.0);
+    vec3 color = fogged;
+//    vec3 color = pow(shadowed, vec3(1.0/2.2));
+
+    FragColor = vec4(color, 1.0);
+
+//    float depthValue = texture(shadowMap, vec3(TexCoord, 0)).r;
+//    FragColor = vec4(vec3(depthValue), 1.0);
+
+//    FragColor = texture(color.id, TexCoord);
 }
 
