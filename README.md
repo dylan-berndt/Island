@@ -36,7 +36,7 @@ other graphics programming projects.
 ## 1/29/24
 
 Some huge changes, although barely visible. Created a scene management system that contains Entities and Components which can be 
-loaded in dynamically. Used this to standardize the rendering pipeline and subsequently adding cascading shadow maps. Updated a few
+loaded in dynamically. Used this to standardize the rendering pipeline and subsequently add cascading shadow maps. Updated a few
 models as well to fit the upgraded shadows. 
 
 ![ezgif-2-1cd16923ca](https://github.com/dylan-berndt/Island/assets/33700799/0369a246-234b-4803-bbeb-f0cd7f4a4d06)![ezgif-2-248a945794](https://github.com/dylan-berndt/Island/assets/33700799/e5979661-cfc3-4ce2-8f00-26ee7ef7f747)
