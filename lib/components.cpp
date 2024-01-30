@@ -31,6 +31,15 @@ glm::mat4 Camera::getView() {
     return view;
 }
 
+glm::mat4 Camera::getProjection() {
+    if (!orthographic) {
+        return glm::perspective(glm::radians(fov), aspect, nearPlane, farPlane);
+    }
+    else {
+        return glm::ortho(-aspect * size, aspect * size, -size, size, nearPlane, farPlane);
+    }
+}
+
 void Camera::getRotation() {
     glm::mat4 view(1.0);
     view = glm::rotate(view, glm::radians(-rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));

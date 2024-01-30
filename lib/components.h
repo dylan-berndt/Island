@@ -17,8 +17,17 @@ public:
 
     glm::vec3 rotation;
 
+    float nearPlane = 0.1f;
+    float farPlane = 500.0f;
+    float fov = 60.0f;
+    float aspect = 1600.0 / 900.0;
+
+    float size = 20.0f;
+    bool orthographic = false;
+
     void rotateByMouse(double dx, double dy);
     glm::mat4 getView();
+    glm::mat4 getProjection();
 
     void update(float delta) override {};
     void draw() override {};

@@ -19,7 +19,7 @@ public:
     static int width;
     static int height;
 
-    static glm::mat4 perspective;
+    static glm::mat4 projection;
     static glm::mat4 view;
 
     static glm::vec3 lightDirection;

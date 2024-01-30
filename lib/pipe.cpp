@@ -22,7 +22,7 @@ glm::vec3 World::lightDirection;
 
 int shadowMapResolution = 2048;
 vector<float> shadowCascadeLevels;
-float nearPlane, farPlane;
+int totalCascades = 5;
 
 float previousFrameTime = 0.0;
 
@@ -94,7 +94,11 @@ Scene::Scene(string sceneName) {
         if (type == "C") {
             float x, y, z, rx, ry, rz;
             iss >> x >> y >> z >> rx >> ry >> rz;
+            float fov, cameraNear, cameraFar;
+            iss >> fov >> cameraNear >> cameraFar;
             camera = Camera(glm::vec3(x, y, z), glm::vec3(rx, ry, rz));
+            camera.fov = fov; camera.nearPlane = cameraNear; camera.farPlane = cameraFar;
+            camera.aspect = float(Window::width) / float(Window::height);
         }
         if (type == "M") {
             string name;
@@ -133,19 +137,15 @@ void loadScene(string sceneName) {
     World::scene = current;
     World::lightDirection = current.lightDirection;
     World::camera = current.camera;
+
+    shadowCascadeLevels = {World::camera.farPlane / 50.0f, World::camera.farPlane / 25.0f,
+                           World::camera.farPlane / 5.0f, World::camera.farPlane / 2.0f};
 }
 
 void initialize(string configName, string sceneName) {
     ifstream config(configName);
 
     config >> Window::width >> Window::height >> Window::name;
-    float fov;
-    config >> fov >> nearPlane >> farPlane;
-    ShaderProgram::perspective = glm::perspective(glm::radians(fov),
-                                                  float(Window::width) / float(Window::height),
-                                                  nearPlane, farPlane);
-
-    shadowCascadeLevels = {farPlane / 50.0f, farPlane / 25.0f, farPlane / 5.0f, farPlane / 2.0f};
 
     if (!glfwInit()) {
         cout << "Can't Initialize GLFW" << endl;
@@ -197,6 +197,7 @@ void update(float &delta) {
 
     ShaderProgram::camera = World::camera.position;
     ShaderProgram::view = World::camera.getView();
+    ShaderProgram::projection = World::camera.getProjection();
     ShaderProgram::lightDirection = World::lightDirection;
 
     for (auto entity : World::scene.entities) {
@@ -283,7 +284,7 @@ void Window::initializePostProcessing() {
     glGenTextures(1, &shadowArray);
     glBindTexture(GL_TEXTURE_2D_ARRAY, shadowArray);
     glTexImage3D(
-            GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT32F,  shadowMapResolution, shadowMapResolution, int(shadowCascadeLevels.size()) + 1,
+            GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT32F,  shadowMapResolution, shadowMapResolution, totalCascades,
             0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
     shadowTexture = new Texture2DArray(shadowArray);
@@ -341,7 +342,7 @@ std::vector<glm::vec4> getFrustumCornersWorldSpace(const glm::mat4& projview)
 glm::mat4 getLightSpaceMatrix(const float localNear, const float localFar)
 {
     const auto proj = glm::perspective(
-            glm::radians(60.0f), (float)Window::width / (float)Window::height, localNear, localFar);
+            glm::radians(World::camera.fov), World::camera.aspect, localNear, localFar);
     const auto corners = getFrustumCornersWorldSpace(proj * World::camera.getView());
 
     glm::vec3 center = glm::vec3(0, 0, 0);
@@ -401,7 +402,7 @@ std::vector<glm::mat4> getLightSpaceMatrices()
     {
         if (i == 0)
         {
-            ret.push_back(getLightSpaceMatrix(nearPlane, shadowCascadeLevels[i]));
+            ret.push_back(getLightSpaceMatrix(World::camera.nearPlane, shadowCascadeLevels[i]));
         }
         else if (i < shadowCascadeLevels.size())
         {
@@ -409,7 +410,7 @@ std::vector<glm::mat4> getLightSpaceMatrices()
         }
         else
         {
-            ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], farPlane));
+            ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], World::camera.farPlane));
         }
     }
     return ret;

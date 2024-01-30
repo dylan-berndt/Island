@@ -22,7 +22,7 @@ layout (std140) uniform LightSpaceMatrices
     mat4 lightSpaceMatrices[16];
 };
 uniform float cascadePlaneDistances[16];
-uniform int cascadeCount;
+uniform int cascadeCount;   // number of frusta - 1
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -135,7 +135,7 @@ vec3 shadow(vec3 original, vec3 pos) {
         return original;
     }
 
-    float bias = 0.0001;
+    float bias = 0.00005;
     const float biasModifier = 0.5f;
     if (layer == cascadeCount)
     {

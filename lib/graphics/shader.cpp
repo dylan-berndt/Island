@@ -4,7 +4,7 @@
 
 using namespace std;
 
-glm::mat4 ShaderProgram::perspective;
+glm::mat4 ShaderProgram::projection;
 glm::mat4 ShaderProgram::view;
 glm::vec3 ShaderProgram::lightDirection;
 glm::vec3 ShaderProgram::camera;
@@ -116,7 +116,7 @@ void ShaderProgram::use() {
 
     setInt("width", ShaderProgram::width);
     setInt("height", ShaderProgram::height);
-    setMat4("projection", ShaderProgram::perspective);
+    setMat4("projection", ShaderProgram::projection);
     setMat4("view", ShaderProgram::view);
     setVec3("camera", ShaderProgram::camera);
     setVec3("lightDirection", ShaderProgram::lightDirection);

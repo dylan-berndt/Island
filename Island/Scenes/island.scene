@@ -1,7 +1,7 @@
 L 1.0 -0.8 1.0
-C 0.0 4.0 20.0 0.0 0.0 0.0
+C 0.0 4.0 20.0 0.0 0.0 0.0 60.0 0.1 500.0
 
-M Island ../Island/Models/Island/island.obj
+M Island ../Island/Models/Island 3/island3.obj
 M Crab ../Island/Models/Crab/10012_crab_v2_iterations-1.obj (0 2.0 0) (-90 0 0) (0.125)
 M Plant ../Island/Models/Palm Plant/Palm_01.obj (-4.0 1.8 4.0) (0.0) (0.25)
 M Palm1 ../Island/Models/Palm 2/Palm_1.obj (4.0 1.6 -9.0) (0.0) (0.01875)

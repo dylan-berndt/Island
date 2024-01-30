@@ -18,8 +18,6 @@ int main() {
     glfwSetKeyCallback(Window::self, keyCallback);
     glfwSetCursorPosCallback(Window::self, cursorPosCallback);
 
-//    ShaderProgram::perspective = glm::ortho(-40.0f, 40.0f, -20.0f, 20.0f, 0.1f, 500.0f);
-
     ShaderProgram::width = Window::width;
     ShaderProgram::height = Window::height;
 
@@ -81,6 +79,8 @@ int main() {
 
 bool focused = false;
 double mx, my = 0;
+
+bool orthographic = false;
 
 void cursorPosCallback(GLFWwindow *window, double xpos, double ypos) {
     if (focused && !(mx == 0 && my == 0)) {
@@ -166,6 +166,10 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
                 else {
                     bloomKernelSize = 1;
                 }
+            }
+            if (key == GLFW_KEY_P) {
+                orthographic = !orthographic;
+                World::camera.orthographic = orthographic;
             }
         }
         else {
