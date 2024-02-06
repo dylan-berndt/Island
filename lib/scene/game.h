@@ -6,12 +6,21 @@
 #include "../graphics/shader.h"
 
 
+template <typename T>
+class Member {
+    T pointer;
+    Member(T p) {pointer = p;};
+};
+
+
 class Component {
 public:
     virtual void update(float delta) {};
     virtual void draw() {};
     virtual void draw(ShaderProgram &) {};
     void* entity = nullptr;
+
+    virtual int assign() { return 0;};
 };
 
 class Transform : public Component {
@@ -46,6 +55,14 @@ public:
         position = p; rotation = glm::vec3(0.0); scale = glm::vec3(1.0);
         calcMatrix();
     };
+
+    int assign(std::string name, glm::vec3 value) {
+        if (name == "position") { position = value;}
+        else if (name == "rotation") { rotation = value;}
+        else if (name == "scale") { scale = value;}
+        else { return 0;}
+        return 1;
+    }
 };
 
 class Entity {
@@ -53,6 +70,9 @@ public:
     std::string name;
     std::vector<Component *> components;
     bool active = true;
+
+    static std::vector<Entity *> entities;
+    static std::map<std::string, Entity *> entityMap;
 
     void update(float delta);
     void draw();
@@ -91,6 +111,7 @@ public:
         if (!tracked) {
             entities.push_back(this);
         }
+        entityMap[name] = this;
     };
 
     static Entity* get(void *ptr) {
@@ -103,8 +124,6 @@ public:
 //            delete component;
         }
     }
-
-    static std::vector<Entity *> entities;
 };
 
 #endif //PIPE_GAME_H

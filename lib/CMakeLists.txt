@@ -1,7 +1,7 @@
 
 aux_source_directory(. PIPE_SRC)
 
-include_directories(external graphics scene external/glfw-3.3.9.bin.WIN64/include)
+include_directories(external graphics scene external/glfw-3.3.9.bin.WIN64/include external/freetype/include)
 link_directories(lib/external/glfw-3.3.9.bin.WIN64/lib-mingw-w64)
 
 add_subdirectory(graphics)

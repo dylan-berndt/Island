@@ -1,11 +1,12 @@
 
-#ifndef ISLAND_COMPONENTS_H
-#define ISLAND_COMPONENTS_H
+#ifndef PIPE_COMPONENTS_H
+#define PIPE_COMPONENTS_H
 
 #include "imports.h"
 #include "game.h"
 #include "model.h"
 #include "obj.h"
+#include "text.h"
 
 class Camera : public Component {
 public:
@@ -35,6 +36,28 @@ public:
 
     Camera(glm::vec3 position, glm::vec3 rotation);
     Camera() {position = glm::vec3(0.0); rotation = glm::vec3(0.0);};
+
+    int assign(std::string name, glm::vec3 value) {
+        if (name == "position") { position = value;}
+        else if (name == "rotation") { rotation = value;}
+        else { return 0;}
+        return 1;
+    }
+
+    template <typename T>
+    int assign(std::string name, T value) {
+        if (name == "fov") { fov = value;}
+        else if (name == "aspect") {aspect = value;}
+        else if (name == "size") {size = value;}
+        else { return 0;}
+        return 1;
+    }
+
+    int assign(std::string name, bool value) {
+        if (name == "orthographic") { orthographic = value;}
+        else { return 0;}
+        return 1;
+    }
 
 private:
     void getRotation();
@@ -79,8 +102,40 @@ public:
     Model model;
     ShaderProgram shader;
 
+    bool cullFace = true;
+
     explicit ModelComponent(std::string path, ShaderProgram &s = *ShaderProgram::defaultShader);
     explicit ModelComponent(Model m, ShaderProgram &s = *ShaderProgram::defaultShader);
 };
 
-#endif //ISLAND_COMPONENTS_H
+class TextComponent : public Component {
+public:
+    void update(float delta) override {};
+    void draw() override;
+    void draw(ShaderProgram &) override {};
+
+    std::string text;
+    glm::vec3 color = glm::vec3(0.0);
+    Font *font;
+    ShaderProgram shader;
+
+    TextComponent(Font*, std::string, glm::vec3 = glm::vec3(0.0),
+                  ShaderProgram& = *ShaderProgram::textShader);
+
+    int assign(std::string name, glm::vec3 value) {
+        if (name == "color") { color = value;}
+        else { return 0;}
+        return 1;
+    }
+
+    int assign(std::string name, std::string value) {
+        if (name == "text") { text = value;}
+        else { return 0;}
+        return 1;
+    }
+
+private:
+    DynamicMesh mesh;
+};
+
+#endif //PIPE_COMPONENTS_H

@@ -24,7 +24,7 @@ CubeMap::CubeMap(vector<string> faces) {
         }
         else
         {
-            std::cout << "ERROR::CUBEMAP " << faces[i] << " failed to load" << std::endl;
+            std::cerr << "ERROR::CUBEMAP " << faces[i] << " failed to load" << std::endl;
         }
     }
 
@@ -50,21 +50,25 @@ Texture2D::Texture2D(int w, int h, int t, int dtype) {
     create(width, height, t, data, dtype);
 }
 
-Texture2D::Texture2D(const char* name) {
+Texture2D::Texture2D(string path) {
     int c, w, h, t;
     data = nullptr;
 
+    #ifdef DEBUG
+        cout << "Loading texture " << path << endl;
+    #endif
+
     stbi_set_flip_vertically_on_load(true);
-    if (name != nullptr && name[0] != '\0') {
-        int length = strlen(name);
-        bool RGBA = length >= 4 && strcmp(name + length - 4, ".png") == 0;
+    if (!path.empty() && path[0] != '\0') {
+        int length = path.length();
+        bool RGBA = length >= 4 && path.find_last_of(".png") != path.npos;
         t = RGBA ? GL_RGBA : GL_RGB;
 
-        unsigned char *d = stbi_load(name, &w, &h, &c, RGBA ? STBI_rgb_alpha : STBI_rgb);
+        unsigned char *d = stbi_load(path.c_str(), &w, &h, &c, RGBA ? STBI_rgb_alpha : STBI_rgb);
         data = d;
 
         if(stbi_failure_reason() && !data) {
-            std::cout << "ERROR::TEXTURE " << name << " " << stbi_failure_reason() << endl;
+            std::cerr << "ERROR::TEXTURE " << path << " " << stbi_failure_reason() << endl;
         }
     }
 

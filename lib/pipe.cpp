@@ -21,8 +21,8 @@ Camera World::camera;
 glm::vec3 World::lightDirection;
 
 int shadowMapResolution = 2048;
-vector<float> shadowCascadeLevels;
-int totalCascades = 5;
+vector<float> ShaderProgram::shadowCascadeLevels = {50.0f, 25.0f, 15.0f, 5.0f, 2.0f};
+int ShaderProgram::shadowMap;
 
 float previousFrameTime = 0.0;
 
@@ -72,13 +72,17 @@ Transform *transformFromString(string transformationData) {
     return new Transform(transforms[0], transforms[1], transforms[2]);
 }
 
-Scene::Scene(string sceneName) {
-    ifstream scene(sceneName);
+Scene::Scene(string path) {
+    ifstream scene(path);
+
+    if (!scene.good()) {
+        cerr << "ERROR::SCENE Couldn't load " << path << endl;
+    }
 
     entities = vector<Entity>();
     lightDirection = glm::vec3(1.0);
 
-    cout << "Loading scene " << sceneName << endl;
+    cout << "Loading scene " << path << endl;
 
     string line;
     while (getline(scene, line)) {
@@ -106,15 +110,25 @@ Scene::Scene(string sceneName) {
 
             string path;
             string section;
+
             iss >> section;
+
+            bool cull = true;
+
+            while (section[0] == '-') {
+                if (section[1] == 'C') {
+                    cull = false;
+                }
+                iss >> section;
+            }
+
             path += section;
             while (iss >> section && section[0] != '(') {
                 path += " " + section;
             }
 
-            cout << "Loading model " << path << endl;
-
-            ModelComponent *modelComponent = new ModelComponent(path);
+            ModelComponent *modelComponent = new ModelComponent(File::getPath(path));
+            modelComponent->cullFace = cull;
 
             string transformationData;
             getline(iss,  transformationData);
@@ -131,21 +145,26 @@ Scene::Scene(string sceneName) {
     scene.close();
 }
 
-void loadScene(string sceneName) {
-    Scene current(sceneName);
+void loadScene(string path) {
+    Scene current(path);
 
     World::scene = current;
     World::lightDirection = current.lightDirection;
     World::camera = current.camera;
-
-    shadowCascadeLevels = {World::camera.farPlane / 50.0f, World::camera.farPlane / 25.0f,
-                           World::camera.farPlane / 5.0f, World::camera.farPlane / 2.0f};
 }
 
-void initialize(string configName, string sceneName) {
-    ifstream config(configName);
+void initialize() {
+    ifstream config("config.txt");
 
     config >> Window::width >> Window::height >> Window::name;
+
+    config >> File::resourceLocation;
+    #ifdef DEBUG
+        cout << "Resource Root: " << File::resourceLocation << endl;
+    #endif
+
+    string sceneName;
+    config >> sceneName;
 
     if (!glfwInit()) {
         cout << "Can't Initialize GLFW" << endl;
@@ -174,21 +193,24 @@ void initialize(string configName, string sceneName) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glEnable(GL_DEBUG_OUTPUT);
-    glDebugMessageCallback(MessageCallback, 0);
+    #ifdef DEBUG
+        glEnable(GL_DEBUG_OUTPUT);
+        glDebugMessageCallback(MessageCallback, 0);
+    #endif
 
     config.close();
 
-    ShaderProgram::defaultShader = new ShaderProgram("../Resources/default");
-    ShaderProgram::shadowShader = new ShaderProgram("../Resources/shadow");
-    ShaderProgram::skyboxShader = new ShaderProgram("../Resources/skybox");
-    ShaderProgram::postShader = new ShaderProgram("../Resources/defaultPost");
+    ShaderProgram::defaultShader = new ShaderProgram(File::getPath("Resources/default"));
+    ShaderProgram::shadowShader = new ShaderProgram(File::getPath("Resources/shadow"));
+    ShaderProgram::skyboxShader = new ShaderProgram(File::getPath("Resources/skybox"));
+    ShaderProgram::postShader = new ShaderProgram(File::getPath("Resources/defaultPost"));
+    ShaderProgram::textShader = new ShaderProgram(File::getPath("Resources/text"));
 
     Window::initializePostProcessing();
 
     glfwSetFramebufferSizeCallback(Window::self, Window::frameBufferSizeCallback);
 
-    loadScene(sceneName);
+    loadScene(File::getPath(sceneName));
 }
 
 void update(float &delta) {
@@ -199,12 +221,20 @@ void update(float &delta) {
     ShaderProgram::view = World::camera.getView();
     ShaderProgram::projection = World::camera.getProjection();
     ShaderProgram::lightDirection = World::lightDirection;
+    ShaderProgram::nearPlane = World::camera.nearPlane;
+    ShaderProgram::farPlane = World::camera.farPlane;
 
     for (auto entity : World::scene.entities) {
         entity.update(delta);
+        if (glError()) {
+            cerr << "While " << entity.name << " updating" << endl;
+        }
     }
     for (auto entity : Entity::entities) {
         entity->update(delta);
+        if (glError()) {
+            cerr << "While " << entity->name << " updating" << endl;
+        }
     }
 }
 
@@ -241,9 +271,15 @@ void Window::draw() {
 
     for (auto entity : Entity::entities) {
         entity->draw();
+        if (glError()) {
+            cerr << "While " << entity->name << " drawing" << endl;
+        }
     }
     for (auto entity : World::scene.entities) {
         entity.draw();
+        if (glError()) {
+            cerr << "While " << entity.name << " drawing" << endl;
+        }
     }
 
     postProcessingBuffer->unbind();
@@ -252,10 +288,11 @@ void Window::draw() {
 
     ShaderProgram::postShader->use();
 
-    ShaderProgram::postShader->setInt("cascadeCount", shadowCascadeLevels.size());
-    for (size_t i = 0; i < shadowCascadeLevels.size(); ++i)
+    ShaderProgram::postShader->setInt("cascadeCount", ShaderProgram::shadowCascadeLevels.size());
+    for (size_t i = 0; i < ShaderProgram::shadowCascadeLevels.size(); ++i)
     {
-        ShaderProgram::postShader->setFloat("cascadePlaneDistances[" + std::to_string(i) + "]", shadowCascadeLevels[i]);
+        ShaderProgram::postShader->setFloat("cascadePlaneDistances[" + std::to_string(i) + "]",
+                                            World::camera.farPlane / ShaderProgram::shadowCascadeLevels[i]);
     }
 
     blit();
@@ -284,7 +321,7 @@ void Window::initializePostProcessing() {
     glGenTextures(1, &shadowArray);
     glBindTexture(GL_TEXTURE_2D_ARRAY, shadowArray);
     glTexImage3D(
-            GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT32F,  shadowMapResolution, shadowMapResolution, totalCascades,
+            GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT32F,  shadowMapResolution, shadowMapResolution, ShaderProgram::shadowCascadeLevels.size() + 1,
             0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 
     shadowTexture = new Texture2DArray(shadowArray);
@@ -314,9 +351,10 @@ void Window::initializePostProcessing() {
 
     screen = new Square();
 
+    ShaderProgram::shadowMap = shadowTexture->id();
+
     screen->material.setTexture2D("color", *colorTexture);
     screen->material.setTexture2D("depth", *depthTexture);
-    screen->material.setTexture2DArray("shadowMap", *shadowTexture);
 }
 
 std::vector<glm::vec4> getFrustumCornersWorldSpace(const glm::mat4& projview)
@@ -398,19 +436,21 @@ glm::mat4 getLightSpaceMatrix(const float localNear, const float localFar)
 std::vector<glm::mat4> getLightSpaceMatrices()
 {
     std::vector<glm::mat4> ret;
-    for (size_t i = 0; i < shadowCascadeLevels.size() + 1; ++i)
+    for (size_t i = 0; i < ShaderProgram::shadowCascadeLevels.size() + 1; ++i)
     {
+        float cascadeLevel = World::camera.farPlane / ShaderProgram::shadowCascadeLevels[i];
+        float previousCascade = World::camera.farPlane / ShaderProgram::shadowCascadeLevels[i - 1];
         if (i == 0)
         {
-            ret.push_back(getLightSpaceMatrix(World::camera.nearPlane, shadowCascadeLevels[i]));
+            ret.push_back(getLightSpaceMatrix(World::camera.nearPlane, cascadeLevel));
         }
-        else if (i < shadowCascadeLevels.size())
+        else if (i < ShaderProgram::shadowCascadeLevels.size())
         {
-            ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], shadowCascadeLevels[i]));
+            ret.push_back(getLightSpaceMatrix(previousCascade, cascadeLevel));
         }
         else
         {
-            ret.push_back(getLightSpaceMatrix(shadowCascadeLevels[i - 1], World::camera.farPlane));
+            ret.push_back(getLightSpaceMatrix(previousCascade, World::camera.farPlane));
         }
     }
     return ret;

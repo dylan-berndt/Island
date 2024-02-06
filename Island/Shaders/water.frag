@@ -6,11 +6,6 @@ in vec3 FragPos;
 #define WATER_COLOR vec3(0.0, 0.05, 0.2)
 
 #define AMBIENT_LIGHT 0.5
-uniform vec3 lightDirection;
-
-uniform vec3 lightColor = vec3(1.0, 1.0, 1.0);
-uniform float time;
-uniform vec3 camera;
 
 #define SAMPLES 32
 #define DRAG_MULT 0.2
@@ -76,6 +71,8 @@ void main() {
     vec3 R = reflect(I, normalize(normal));
     vec3 skyReflection = texture(sky, R).rgb;
 
+    float shade = shadow(FragPos, 3) * 0.6;
+
     vec3 result = (ambient + diffuse + specular) * WATER_COLOR;
 
     result = mix(result, skyReflection, 0.5);
@@ -84,5 +81,5 @@ void main() {
 
     result += vec3(1.0, 1.0, 1.0) * height;
 
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4(result * (1.0 - shade), 1.0);
 }

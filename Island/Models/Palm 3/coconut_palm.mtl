@@ -4,7 +4,7 @@ newmtl Frond
 	map_bump frond stem_normal.png
 
 newmtl Trunk_Bottom
-	map_Kd palm02.png
+	map_Kd ../Palm 2/textures/Palm_Trunk.png
 	map_bump palm02_normal.png
 
 newmtl Leaves

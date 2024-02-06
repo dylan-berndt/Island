@@ -13,7 +13,7 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
 float delta;
 
 int main() {
-    initialize("../Island/config.txt", "../Island/Scenes/island.scene");
+    initialize();
 
     glfwSetKeyCallback(Window::self, keyCallback);
     glfwSetCursorPosCallback(Window::self, cursorPosCallback);
@@ -21,14 +21,14 @@ int main() {
     ShaderProgram::width = Window::width;
     ShaderProgram::height = Window::height;
 
-    ShaderProgram water_shader("../Island/Shaders/water");
-    ShaderProgram post_shader("../Island/Shaders/post");
+    ShaderProgram water_shader(File::getPath("Island/Shaders/water"));
+    ShaderProgram post_shader(File::getPath("Island/Shaders/post"));
 
     ShaderProgram::postShader = &post_shader;
 
-    vector<string> faces = {"../Island/Sky/bluecloud_rt.jpg", "../Island/Sky/bluecloud_lf.jpg",
-                            "../Island/Sky/bluecloud_dn.jpg", "../Island/Sky/bluecloud_up.jpg",
-                            "../Island/Sky/bluecloud_bk.jpg", "../Island/Sky/bluecloud_ft.jpg"};
+    vector<string> faces = {File::getPath("Island/Sky/bluecloud_rt.jpg"), File::getPath("Island/Sky/bluecloud_lf.jpg"),
+                            File::getPath("Island/Sky/bluecloud_dn.jpg"), File::getPath("Island/Sky/bluecloud_up.jpg"),
+                            File::getPath("Island/Sky/bluecloud_bk.jpg"), File::getPath("Island/Sky/bluecloud_ft.jpg")};
 
     CubeMap skyMap(faces);
 
@@ -40,11 +40,17 @@ int main() {
 
     int amount = 400;
     Mesh waterMesh = flatMesh(amount, amount);
-    Transform *waterTransform = new Transform(glm::vec3(0.0, -2.5, 0.0), glm::vec3(0.0), glm::vec3(400.0, 1.0, 400.0));
-    Entity water("water", waterTransform);
+    Transform waterTransform(glm::vec3(0.0, -2.5, 0.0), glm::vec3(0.0), glm::vec3(400.0, 1.0, 400.0));
+    Entity water("water", &waterTransform);
     MeshComponent<Mesh> mesh(waterMesh, water_shader);
     mesh.getMaterial().setCubeMap("sky", skyMap);
     water.addComponent(&mesh);
+
+//    Transform textTransform(glm::vec3(-40.0, -40.0, 0.0), glm::vec3(0.0), glm::vec3(4.0));
+//    Entity text("text", &textTransform);
+//    Font arial("C:/Windows/Fonts/arial.ttf", 48);
+//    TextComponent textComponent(&arial, "hey");
+//    text.addComponent(&textComponent);
 
     cout << "Total vertices: " << Mesh::totalVertices << endl;
 
@@ -59,11 +65,6 @@ int main() {
         ShaderProgram::postShader->stop();
 
         Window::draw();
-
-        GLenum err = glGetError();
-        if (err != GL_NO_ERROR) {
-            cerr << "OpenGL error: " << err << endl;
-        }
 
         glfwPollEvents();
         keyPress(Window::self);

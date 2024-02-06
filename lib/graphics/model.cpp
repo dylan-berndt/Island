@@ -50,9 +50,13 @@ void Model::loadModel(string path) {
 
     ifstream infile(path);
     if (!infile) {
-        cout << "ERROR::MODEL Couldn't find " << path << endl;
+        cerr << "ERROR::MODEL Couldn't find " << path << endl;
         return;
     }
+
+    #ifdef DEBUG
+        cout << "Loading model " << path << endl;
+    #endif
 
     vector<glm::vec3> positions;
     vector<glm::vec3> normals;
@@ -232,12 +236,16 @@ void Model::loadModel(string path) {
     infile.close();
 }
 
-vector<Material> Model::loadMaterials(string file) {
+vector<Material> Model::loadMaterials(string path) {
     vector<Material> materials;
 
-    ifstream infile(directory + file);
+    #ifdef DEBUG
+        cout << "Loading material " << path << endl;
+    #endif
+
+    ifstream infile(directory + path);
     if (!infile) {
-        cout << "ERROR::MATERIAL Couldn't find " << directory + file << endl;
+        cerr << "ERROR::MATERIAL Couldn't find " << directory + path << endl;
         return vector<Material>();
     }
 

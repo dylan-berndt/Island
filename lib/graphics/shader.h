@@ -11,6 +11,7 @@ public:
     static ShaderProgram *shadowShader;
     static ShaderProgram *skyboxShader;
     static ShaderProgram *postShader;
+    static ShaderProgram *textShader;
 
     bool used = false;
 
@@ -25,6 +26,12 @@ public:
     static glm::vec3 lightDirection;
 
     static glm::vec3 camera;
+
+    static int shadowMap;
+    static std::vector<float> shadowCascadeLevels;
+
+    static float nearPlane;
+    static float farPlane;
 
     void openShader(std::string name, int type) const;
     void compile() const;

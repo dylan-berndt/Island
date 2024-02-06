@@ -8,7 +8,7 @@
 
 void loadScene(std::string sceneName);
 
-void initialize(std::string configName, std::string sceneName);
+void initialize();
 
 void update(float &delta);
 

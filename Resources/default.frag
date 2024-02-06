@@ -1,34 +1,14 @@
 #version 330 core
 out vec4 FragColor;
 
-#define AMBIENT 0.5
+#define AMBIENT 0.6
 
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoords;
 in vec3 Tangent;
 
-uniform mat4 projection;
-uniform mat4 model;
-uniform mat4 view;
-uniform vec3 camera;
-
-uniform vec3 lightDirection;
-uniform sampler2D shadowMap;
-
-uniform int width;
-uniform int height;
-
-uniform vec3 lightColor = vec3(1.0, 1.0, 1.0);
-
 uniform vec3 baseColor = vec3(1.0, 0.0, 1.0);
-
-struct Texture {
-    sampler2D id;
-    vec3 offset;
-    vec3 scale;
-    float bumpMultiplier;
-};
 
 uniform Texture baseTexture;
 uniform Texture bumpTexture;
@@ -37,8 +17,13 @@ void main() {
     vec2 baseTransformCoords = baseTexture.scale.xy * (TexCoords + baseTexture.offset.xy);
     vec2 bumpTransformCoords = bumpTexture.scale.xy * (TexCoords + bumpTexture.offset.xy);
 
-    if (texture(baseTexture.id, baseTransformCoords).a < 0.1) {
-        discard;
+    if (texture(baseTexture.id, baseTransformCoords).a < 0.2) {
+        gl_FragDepth = 1.0;
+    }
+    else {
+        vec4 v_clip_coord = projection * view * vec4(FragPos, 1.0);
+        float f_ndc_depth = v_clip_coord.z / v_clip_coord.w;
+        gl_FragDepth = (1.0 - 0.0) * 0.5 * f_ndc_depth + (1.0 + 0.0) * 0.5;
     }
 
     vec3 ambient = AMBIENT * lightColor;
@@ -59,7 +44,9 @@ void main() {
 
     float diffuse = max(dot(normal, -lightDirection), 0.0);
 
-    vec4 res = vec4(ambient + diffuse + specular, 1.0) * texture(baseTexture.id, baseTransformCoords);
+    float shade = shadow(FragPos, 3) * 0.6;
+
+    vec4 res = vec4(ambient + (1.0 - shade) * (diffuse + specular), 1.0) * texture(baseTexture.id, baseTransformCoords);
 
     FragColor = res;
 }

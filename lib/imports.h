@@ -22,7 +22,16 @@
 std::ostream& operator<< (std::ostream& os, glm::vec1 v);
 std::ostream& operator<< (std::ostream& os, glm::vec2 v);
 std::ostream& operator<< (std::ostream& os, glm::vec3 v);
+std::ostream& operator<< (std::ostream& os, glm::vec4 v);
 std::ostream& operator<< (std::ostream& os, glm::mat3 v);
 std::ostream& operator<< (std::ostream& os, glm::mat4 v);
+
+class File {
+public:
+    static std::string resourceLocation;
+    static std::string getPath(std::string path);
+};
+
+int glError();
 
 #endif //PIPE_BACK_H

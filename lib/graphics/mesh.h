@@ -89,12 +89,24 @@ public:
 
     Mesh(std::vector<Vertex>, std::vector<int>);
     void draw(ShaderProgram&);
-private:
+
+protected:
     unsigned int VAO, VBO, EBO;
+    Mesh() {};
+
+private:
     void setupMesh();
 };
 
 Mesh flatMesh(int, int);
 
+class DynamicMesh : public Mesh {
+public:
+    DynamicMesh(std::vector<Vertex>, std::vector<int>);
+    void updateSubData(std::vector<Vertex>, int offset = 0);
+    void updateSubData(std::vector<int>, int offset = 0);
+private:
+    void setupDynamicMesh();
+};
 
 #endif //PIPE_MESH_H

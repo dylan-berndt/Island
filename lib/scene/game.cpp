@@ -4,6 +4,7 @@
 using namespace std;
 
 vector<Entity *> Entity::entities;
+map<string, Entity *> Entity::entityMap;
 
 void Entity::update(float delta) {
     for (auto component : components) {

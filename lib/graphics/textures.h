@@ -28,7 +28,7 @@ public:
 
     unsigned int id() const {return self;};
     Texture2D(int w, int h, int t = GL_RGB, int dtype=GL_UNSIGNED_BYTE);
-    explicit Texture2D(const char* name);
+    explicit Texture2D(std::string path);
     explicit Texture2D(unsigned int num);
     Texture2D() {width = 0; height = 0; self = 0; data = nullptr;};
 private:

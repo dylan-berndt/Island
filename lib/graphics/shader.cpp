@@ -11,10 +11,14 @@ glm::vec3 ShaderProgram::camera;
 int ShaderProgram::width;
 int ShaderProgram::height;
 
+float ShaderProgram::nearPlane;
+float ShaderProgram::farPlane;
+
 ShaderProgram *ShaderProgram::defaultShader = nullptr;
 ShaderProgram *ShaderProgram::shadowShader = nullptr;
 ShaderProgram *ShaderProgram::skyboxShader = nullptr;
 ShaderProgram *ShaderProgram::postShader = nullptr;
+ShaderProgram *ShaderProgram::textShader = nullptr;
 
 ShaderProgram::ShaderProgram() {
     unsigned int s;
@@ -22,8 +26,9 @@ ShaderProgram::ShaderProgram() {
     self = s;
 }
 
-ShaderProgram::ShaderProgram(string location) {
-    name = location.substr(location.find_last_of('/') + 1);
+ShaderProgram::ShaderProgram(string path) {
+    path = path;
+    name = path.substr(path.find_last_of('/') + 1);
 
     unsigned int s;
     s = glCreateProgram();
@@ -37,11 +42,13 @@ ShaderProgram::ShaderProgram(string location) {
     };
 
     for (auto type : shaderTypes) {
-        ifstream file(location + type.first);
+        ifstream file(path + type.first);
 
         if (file.good()) {
-            cout << "Loading shader " << location + type.first << endl;
-            openShader(location + type.first, type.second);
+            #ifdef DEBUG
+                cout << "Loading shader " << path + type.first << endl;
+            #endif
+            openShader(path + type.first, type.second);
         }
 
         file.close();
@@ -53,6 +60,17 @@ ShaderProgram::ShaderProgram(string location) {
 void ShaderProgram::openShader(string name, int type) const {
     ifstream file(name);
     string source((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+
+    string path = File::getPath("Resources/insert.txt");
+    ifstream insertFile(path);
+    string insertSource((istreambuf_iterator<char>(insertFile)), istreambuf_iterator<char>());
+
+    int versionPosition = source.find_first_of('#');
+    string sourceAfterVersion = source.substr(versionPosition);
+
+    int newLinePosition = sourceAfterVersion.find_first_of('\n');
+    source.insert(versionPosition + newLinePosition, "\n" + insertSource);
+
     const char *data = source.c_str();
 
     unsigned int shader;
@@ -121,6 +139,13 @@ void ShaderProgram::use() {
     setVec3("camera", ShaderProgram::camera);
     setVec3("lightDirection", ShaderProgram::lightDirection);
     setFloat("time", float(glfwGetTime()));
+
+    setInt("cascadeCount", shadowCascadeLevels.size());
+    for (size_t i = 0; i < shadowCascadeLevels.size(); ++i)
+    {
+        setFloat("cascadePlaneDistances[" + std::to_string(i) + "]",
+                             farPlane / shadowCascadeLevels[i]);
+    }
 }
 
 void ShaderProgram::stop() {

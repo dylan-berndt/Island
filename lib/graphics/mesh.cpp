@@ -41,6 +41,9 @@ void Material::use(ShaderProgram &shader) {
         num++;
     }
 
+    glActiveTexture(GL_TEXTURE0 + num);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, ShaderProgram::shadowMap);
+
     for (auto pair : cubeMaps) {
         pair.second.bind();
     }
@@ -162,4 +165,65 @@ Mesh flatMesh(int nx, int ny) {
     }
 
     return Mesh(vertices, indices);
+}
+
+DynamicMesh::DynamicMesh(vector<Vertex> v, vector<int> i) : Mesh() {
+    vertices = v;
+    indices = i;
+
+    model = glm::mat4(1.0);
+
+    setupDynamicMesh();
+}
+
+void DynamicMesh::setupDynamicMesh() {
+    totalVertices += vertices.size();
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), nullptr, GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int),
+                 nullptr, GL_STATIC_DRAW);
+
+    calculateTangents();
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoord));
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, tangent));
+
+    glBindVertexArray(0);
+}
+
+void DynamicMesh::updateSubData(vector<Vertex> v, int offset) {
+    bind();
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    for (int i = 0; i < v.size() && vertices.begin() + offset + i < vertices.end(); i++) {
+        vertices[i + offset] = v[i];
+    }
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex) * vertices.size(), &vertices[0]);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void DynamicMesh::updateSubData(vector<int> v, int offset) {
+    bind();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    for (int i = 0; i < v.size() && indices.begin() + offset + i < indices.end(); i++) {
+        indices[i + offset] = v[i];
+    }
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(Vertex) * indices.size(), &indices[0]);
 }
