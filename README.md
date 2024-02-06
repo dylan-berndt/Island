@@ -7,6 +7,7 @@ other graphics programming projects.
 
 * OpenGL interface
   * Abstracted Model and Mesh system
+  * Custom .scene file for loading and managing Models
   * Custom loading of .obj and .mtl
   * Textures
   * CubeMaps
@@ -16,7 +17,7 @@ other graphics programming projects.
 * PBR
   * Blinn-Phong shading
   * Environment reflections
-  * Orthographic directional shadows
+  * Cascading shadow maps
   * Normal Mapping
 * Fluid simulation
   * Sum of sines method
@@ -29,9 +30,17 @@ other graphics programming projects.
 
 * Specular mapping
 * Schlick-Fresnel lighting/reflections
-* Scene management system
 * Debugging tools
 * Text rendering
+
+## 1/29/24
+
+Some huge changes, although barely visible. Created a scene management system that contains Entities and Components which can be 
+loaded in dynamically. Used this to standardize the rendering pipeline and subsequently add cascading shadow maps. Updated a few
+models as well to fit the upgraded shadows. 
+
+![ezgif-2-1cd16923ca](https://github.com/dylan-berndt/Island/assets/33700799/0369a246-234b-4803-bbeb-f0cd7f4a4d06)![ezgif-2-248a945794](https://github.com/dylan-berndt/Island/assets/33700799/e5979661-cfc3-4ce2-8f00-26ee7ef7f747)
+![ezgif-2-68877d0690](https://github.com/dylan-berndt/Island/assets/33700799/39d0eab8-90c0-4bc8-b5dc-cf8ae4e4bfe2)
 
 ## 1/17/24
 
