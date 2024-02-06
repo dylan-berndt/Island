@@ -1,6 +1,7 @@
 /lib/external/
 bin/
 cmake-build-debug/
+cmake-build-release/
 Pipe.iml
 vcs.xml
 misc.xml
