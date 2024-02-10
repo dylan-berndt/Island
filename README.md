@@ -9,6 +9,7 @@ other graphics programming projects.
   * Abstracted Model and Mesh system
   * Custom .scene file for loading and managing Models
   * Custom loading of .obj and .mtl
+  * Text Rendering
   * Textures
   * CubeMaps
   * Shaders
@@ -30,8 +31,17 @@ other graphics programming projects.
 
 * Specular mapping
 * Schlick-Fresnel lighting/reflections
-* Debugging tools
-* Text rendering
+* Editor console
+* Frustum Culling
+
+## 2/6/24
+
+Text rendering finally. Lots of changes to things like shaders and file loading. Very close to my end goal for this project, a console
+where I can load in new models, create new entities, and modify entity data on the fly. I'm thinking about switching the current scene 
+as well.
+
+![Screenshot (268)](https://github.com/dylan-berndt/Island/assets/33700799/e4ea7040-7b71-40ab-bf24-7da4d062d6ea)
+![Screenshot (269)](https://github.com/dylan-berndt/Island/assets/33700799/c7d48e25-dadb-45cd-91fa-b0b762ee4fa0)
 
 ## 1/29/24
 
