@@ -20,7 +20,13 @@ public:
     virtual void draw(ShaderProgram &) {};
     void* entity = nullptr;
 
-    virtual int assign() { return 0;};
+    virtual int assign(std::string s, int v) { return 0;};
+    virtual int assign(std::string s, glm::vec2 v) { return 0;};
+    virtual int assign(std::string s, glm::vec3 v) { return 0;};
+    virtual int assign(std::string s, glm::vec4 v) { return 0;};
+    virtual int assign(std::string s, std::string v) { return 0;};
+    virtual int assign(std::string s, float v) { return 0;};
+    virtual int assign(std::string s, bool v) { return 0;};
 };
 
 class Transform : public Component {
@@ -68,6 +74,7 @@ public:
 class Entity {
 public:
     std::string name;
+    std::vector<std::string> componentNames;
     std::vector<Component *> components;
     bool active = true;
 
@@ -78,7 +85,8 @@ public:
     void draw();
     void draw(ShaderProgram &);
 
-    void addComponent(Component *c) {
+    void addComponent(std::string name, Component *c) {
+        componentNames.push_back(name);
         components.push_back(c);
     };
 
@@ -95,6 +103,12 @@ public:
         return nullptr;
     };
 
+    Component* getComponent(std::string typeName) {
+        auto it = find(componentNames.begin(), componentNames.end(), typeName);
+        if (it == componentNames.end()) { return nullptr; }
+        return components[it - componentNames.begin()];
+    }
+
     Transform* transform() {
         return getComponent<Transform>();
     };
@@ -106,6 +120,7 @@ public:
             t = new Transform();
         }
 
+        componentNames.push_back("Transform");
         components.push_back(t);
 
         if (!tracked) {
@@ -121,7 +136,7 @@ public:
 
     ~Entity() {
         for (auto component : components) {
-//            delete component;
+            delete component;
         }
     }
 };

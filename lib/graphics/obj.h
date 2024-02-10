@@ -18,6 +18,7 @@ public:
 
 class SkyBox : public Cube {
 public:
+    SkyBox(std::string);
     SkyBox(std::vector<std::string> faces);
     SkyBox(CubeMap c) : Cube() {cubeMap = c;};
     void draw(ShaderProgram &shader);

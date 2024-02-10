@@ -10,7 +10,7 @@ void main()
 {
     float alpha = texture(text, TexCoords).r;
 
-    if (alpha < 0.5) {
+    if (alpha < 0.1) {
         gl_FragDepth = 1.0;
     }
     else {

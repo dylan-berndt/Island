@@ -46,7 +46,14 @@ SkyBox::SkyBox(std::vector<std::string> faces) : Cube() {
     cubeMap = CubeMap(faces);
 }
 
+SkyBox::SkyBox(std::string path) : Cube() {
+    cubeMap = CubeMap(path);
+}
+
 void SkyBox::draw(ShaderProgram &shader) {
+    int cull;
+    glGetIntegerv(GL_CULL_FACE_MODE, &cull);
+
     glDepthMask(GL_FALSE);
     glCullFace(GL_FRONT);
 
@@ -67,5 +74,5 @@ void SkyBox::draw(ShaderProgram &shader) {
     shader.stop();
 
     glDepthMask(GL_TRUE);
-    glCullFace(GL_BACK);
+    glCullFace(cull);
 }

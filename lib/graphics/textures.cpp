@@ -7,7 +7,36 @@
 
 using namespace std;
 
+CubeMap::CubeMap(string path) {
+    map<int, string> order;
+    vector<string> directions = {"lf", "rt", "up", "dn", "ft", "bk"};
+
+    for (const auto& entry : filesystem::directory_iterator(path)) {
+        for (int i = 0; i < directions.size(); i++) {
+            string find = directions[i];
+            string name = entry.path().string();
+            string end = name.substr(name.find_last_of('/'));
+            if (end.find(find) != string::npos) {
+                order.insert(pair<int, string>(i, name));
+                break;
+            }
+        }
+    }
+
+    vector<string> faces;
+
+    for (int i = 0; i < 6; i++) {
+        faces.push_back(order[i]);
+    }
+
+    create(faces);
+}
+
 CubeMap::CubeMap(vector<string> faces) {
+    create(faces);
+}
+
+void CubeMap::create(vector<string> faces) {
     unsigned int textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
@@ -15,16 +44,28 @@ CubeMap::CubeMap(vector<string> faces) {
     int width, height, nrChannels;
     for (unsigned int i = 0; i < faces.size(); i++)
     {
-        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        int t = GL_RGB;
+        bool RGBA = false;
+        if (faces[i].length() >= 4) {
+            if (faces[i].find(".png") != faces[i].npos) {
+                t = GL_RGBA;
+                RGBA = true;
+            }
+            if (faces[i].find(".tga") != faces[i].npos) {
+                t = GL_BGRA;
+                RGBA = true;
+            }
+        }
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, RGBA ? STBI_rgb_alpha : STBI_rgb);
         if (data)
         {
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+                         0, GL_RGBA, width, height, 0, t, GL_UNSIGNED_BYTE, data
             );
         }
         else
         {
-            std::cerr << "ERROR::CUBEMAP " << faces[i] << " failed to load" << std::endl;
+            Log << "\aERROR::CUBEMAP " << faces[i] << " failed to load\a" << std::endl;
         }
     }
 
@@ -55,20 +96,31 @@ Texture2D::Texture2D(string path) {
     data = nullptr;
 
     #ifdef DEBUG
-        cout << "Loading texture " << path << endl;
+        Log << "Loaded texture " << path << endl;
     #endif
 
     stbi_set_flip_vertically_on_load(true);
     if (!path.empty() && path[0] != '\0') {
         int length = path.length();
-        bool RGBA = length >= 4 && path.find_last_of(".png") != path.npos;
-        t = RGBA ? GL_RGBA : GL_RGB;
+
+        t = GL_RGB;
+        bool RGBA = false;
+        if (length >= 4) {
+            if (path.find(".png") != path.npos) {
+                t = GL_RGBA;
+                RGBA = true;
+            }
+            if (path.find(".tga") != path.npos) {
+                t = GL_BGRA;
+                RGBA = true;
+            }
+        }
 
         unsigned char *d = stbi_load(path.c_str(), &w, &h, &c, RGBA ? STBI_rgb_alpha : STBI_rgb);
         data = d;
 
         if(stbi_failure_reason() && !data) {
-            std::cerr << "ERROR::TEXTURE " << path << " " << stbi_failure_reason() << endl;
+            Log << "\aERROR::TEXTURE " << path << " " << stbi_failure_reason() << "\a" << endl;
         }
     }
 
@@ -189,25 +241,25 @@ void FrameBuffer::checkComplete() {
 
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         if (status == GL_FRAMEBUFFER_UNDEFINED) {
-            cerr << "ERROR:FRAMEBUFFER Undefined" << endl;
+            Log << "\aERROR:FRAMEBUFFER Undefined\a" << endl;
         }
         else if (status == GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT) {
-            cerr << "ERROR::FRAMEBUFFER Incomplete attachment" << endl;
+            Log << "\aERROR::FRAMEBUFFER Incomplete attachment\a" << endl;
         }
         else if (status == GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER) {
-            cerr << "ERROR::FRAMEBUFFER Incomplete draw buffer" << endl;
+            Log << "\aERROR::FRAMEBUFFER Incomplete draw buffer\a" << endl;
         }
         else if (status == GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER) {
-            cerr << "ERROR::FRAMEBUFFER Incomplete read buffer" << endl;
+            Log << "\aERROR::FRAMEBUFFER Incomplete read buffer\a" << endl;
         }
         else if (status == GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT) {
-            cerr << "ERROR::FRAMEBUFFER Missing attachment" << endl;
+            Log << "\aERROR::FRAMEBUFFER Missing attachment\a" << endl;
         }
         else if (status == GL_FRAMEBUFFER_UNSUPPORTED) {
-            cerr << "ERROR::FRAMEBUFFER Unsupported attachment" << endl;
+            Log << "\aERROR::FRAMEBUFFER Unsupported attachment\a" << endl;
         }
         else {
-            cerr << "ERROR::FRAMEBUFFER No clue" << endl;
+            Log << "\aERROR::FRAMEBUFFER No clue\a" << endl;
         }
     }
 }

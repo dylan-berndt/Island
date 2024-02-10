@@ -1,5 +1,5 @@
-LIGHT_DIRECTION 1.0 -0.8 1.0
-LIGHT_COLOR 1.0 1.0 1.0
+LIGHT_DIRECTION 0.2 -0.4 -1.0
+LIGHT_COLOR 0.2 0.1 0.2
 CAMERA 0.0 4.0 20.0 0.0 0.0 0.0 60.0 0.1 500.0
 
 MODEL Island Island/Models/Island 3/island3.obj
@@ -8,7 +8,7 @@ MODEL Plant Island/Models/Palm Plant/Palm_01.obj (-4.0 1.8 4.0) (0.0) (0.25)
 MODEL Palm1 Island/Models/Palm 2/Palm_1.obj (4.0 1.6 -9.0) (0.0) (0.01875)
 MODEL Palm2 -C Island/Models/Palm 3/coconut palm.obj (0.0 0.0 4.5) (0.0) (0.046875)
 
-SKYBOX Island/Skybox/Day
+SKYBOX Island/Skybox/Night
 
 WATER
 

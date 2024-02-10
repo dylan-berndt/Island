@@ -50,12 +50,12 @@ void Model::loadModel(string path) {
 
     ifstream infile(path);
     if (!infile) {
-        cerr << "ERROR::MODEL Couldn't find " << path << endl;
+        Log << "\aERROR::MODEL Couldn't find " << path << "\a" << endl;
         return;
     }
 
     #ifdef DEBUG
-        cout << "Loading model " << path << endl;
+        Log << "Loaded model " << path << endl;
     #endif
 
     vector<glm::vec3> positions;
@@ -240,12 +240,12 @@ vector<Material> Model::loadMaterials(string path) {
     vector<Material> materials;
 
     #ifdef DEBUG
-        cout << "Loading material " << path << endl;
+        Log << "Loaded material " << path << endl;
     #endif
 
     ifstream infile(directory + path);
     if (!infile) {
-        cerr << "ERROR::MATERIAL Couldn't find " << directory + path << endl;
+        Log << "\aERROR::MATERIAL Couldn't find " << directory + path << "\a" << endl;
         return vector<Material>();
     }
 

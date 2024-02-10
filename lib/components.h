@@ -133,9 +133,6 @@ public:
         else { return 0;}
         return 1;
     }
-
-private:
-    DynamicMesh mesh;
 };
 
 #endif //PIPE_COMPONENTS_H

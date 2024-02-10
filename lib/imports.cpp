@@ -2,6 +2,8 @@
 #include "imports.h"
 
 std::string File::resourceLocation;
+std::stringstream Log;
+std::stringstream Commands;
 
 std::ostream& operator<< (std::ostream& os, glm::vec1 v) {
     os << v.x;
@@ -50,9 +52,25 @@ std::string File::getPath(std::string path) {
 int glError() {
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
-        std::cerr << "OpenGL error: " << err << std::endl;
+        Log << "\aOpenGL error: " << err << "\a" << std::endl;
         return 1;
     }
     return 0;
+}
+
+void GLAPIENTRY
+MessageCallback( GLenum source,
+                 GLenum type,
+                 GLuint id,
+                 GLenum severity,
+                 GLsizei length,
+                 const GLchar* message,
+                 const void* userParam )
+{
+    Log << "\aGL CALLBACK: " << (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "")
+        << " type = 0x" << type
+        << ", severity = 0x" << severity
+        << ", message = " << message
+        << "\a" << std::endl;
 }
 

@@ -9,67 +9,35 @@ void cursorPosCallback(GLFWwindow *window, double xpos, double ypos);
 
 void keyPress(GLFWwindow *window);
 void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
+void myCommand(string);
 
 float delta;
 
 int main() {
+    Window::setUserCommand(myCommand);
+
     initialize();
 
-    glfwSetKeyCallback(Window::self, keyCallback);
+    Window::setUserKeyCallback(keyCallback);
+    Window::setUserKeyPress(keyPress);
     glfwSetCursorPosCallback(Window::self, cursorPosCallback);
 
     ShaderProgram::width = Window::width;
     ShaderProgram::height = Window::height;
 
-    ShaderProgram water_shader(File::getPath("Island/Shaders/water"));
     ShaderProgram post_shader(File::getPath("Island/Shaders/post"));
 
     ShaderProgram::postShader = &post_shader;
 
-    vector<string> faces = {File::getPath("Island/Sky/bluecloud_rt.jpg"), File::getPath("Island/Sky/bluecloud_lf.jpg"),
-                            File::getPath("Island/Sky/bluecloud_dn.jpg"), File::getPath("Island/Sky/bluecloud_up.jpg"),
-                            File::getPath("Island/Sky/bluecloud_bk.jpg"), File::getPath("Island/Sky/bluecloud_ft.jpg")};
-
-    CubeMap skyMap(faces);
-
-    SkyBox sky(skyMap);
-    Transform skyRotate(glm::vec3(0.0), glm::vec3(0.0, -135.0f, 0.0), glm::vec3(1.0));
-    Entity skybox("skybox", &skyRotate);
-    MeshComponent<SkyBox> skyMesh(sky, *ShaderProgram::skyboxShader);
-    skybox.addComponent(&skyMesh);
-
-    int amount = 400;
-    Mesh waterMesh = flatMesh(amount, amount);
-    Transform waterTransform(glm::vec3(0.0, -2.5, 0.0), glm::vec3(0.0), glm::vec3(400.0, 1.0, 400.0));
-    Entity water("water", &waterTransform);
-    MeshComponent<Mesh> mesh(waterMesh, water_shader);
-    mesh.getMaterial().setCubeMap("sky", skyMap);
-    water.addComponent(&mesh);
-
-//    Transform textTransform(glm::vec3(-40.0, -40.0, 0.0), glm::vec3(0.0), glm::vec3(4.0));
-//    Entity text("text", &textTransform);
-//    Font arial("C:/Windows/Fonts/arial.ttf", 48);
-//    TextComponent textComponent(&arial, "hey");
-//    text.addComponent(&textComponent);
-
-    cout << "Total vertices: " << Mesh::totalVertices << endl;
-
     while (!glfwWindowShouldClose(Window::self)) {
         update(delta);
 
-        water.transform()->position.x = float(int(World::camera.position.x / 2.0f)) * 2.0f;
-        water.transform()->position.z = float(int(World::camera.position.z / 2.0f)) * 2.0f;
-
-        ShaderProgram::postShader->use();
-        ShaderProgram::postShader->setInt("bloomKernelSize", bloomKernelSize);
-        ShaderProgram::postShader->stop();
+        if (Entity::entityMap.count("water")) {
+            Entity::entityMap["water"]->transform()->position.x = float(int(World::camera.position.x / 2.0f)) * 2.0f;
+            Entity::entityMap["water"]->transform()->position.z = float(int(World::camera.position.z / 2.0f)) * 2.0f;
+        }
 
         Window::draw();
-
-        glfwPollEvents();
-        keyPress(Window::self);
-
-        glfwSwapBuffers(Window::self);
     }
 
     glfwDestroyWindow(Window::self);
@@ -175,6 +143,81 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
         }
         else {
 
+        }
+    }
+}
+
+void myCommand(string command) {
+    istringstream iss(command);
+
+    string type;
+    iss >> type;
+
+    if (type == "SATURATION") {
+        float sat;
+        iss >> sat;
+
+        ShaderProgram::postShader->use();
+        ShaderProgram::postShader->setFloat("saturation", sat);
+        ShaderProgram::postShader->stop();
+    }
+    else if (type == "HUE") {
+        float hue;
+        iss >> hue;
+
+        ShaderProgram::postShader->use();
+        ShaderProgram::postShader->setFloat("hue", hue);
+        ShaderProgram::postShader->stop();
+    }
+    else if (type == "VALUE") {
+        float val;
+        iss >> val;
+
+        ShaderProgram::postShader->use();
+        ShaderProgram::postShader->setFloat("value", val);
+        ShaderProgram::postShader->stop();
+    }
+    else if (type == "PIXEL") {
+        int size;
+        iss >> size;
+
+        ShaderProgram::postShader->use();
+        ShaderProgram::postShader->setInt("pixelSize", size);
+        ShaderProgram::postShader->stop();
+    }
+    else if (type == "OUTLINE") {
+        float size;
+        iss >> size;
+
+        ShaderProgram::postShader->use();
+        ShaderProgram::postShader->setFloat("outlineThickness", size);
+        ShaderProgram::postShader->stop();
+    }
+    else if (type == "BLOOM") {
+        int size;
+        iss >> size;
+
+        ShaderProgram::postShader->use();
+        ShaderProgram::postShader->setInt("bloomKernelSize", size);
+        ShaderProgram::postShader->stop();
+    }
+    else if (type == "WATER") {
+        ShaderProgram water_shader(File::getPath("Island/Shaders/water"));
+        CubeMap skyMap(File::getPath("Island/Skybox/Day/"));
+
+        int amount = 400;
+        Mesh waterMesh = flatMesh(amount, amount);
+        Transform *waterTransform = new Transform(glm::vec3(0.0, -2.5, 0.0), glm::vec3(0.0), glm::vec3(400.0, 1.0, 400.0));
+        Entity *water = new Entity("water", waterTransform);
+        MeshComponent<Mesh> *mesh = new MeshComponent<Mesh>(waterMesh, water_shader);
+        mesh->getMaterial().setCubeMap("sky", skyMap);
+        water->addComponent("MeshComponent", mesh);
+    }
+    else if (type == "STATS") {
+        Log << endl << "Total vertices: " << Mesh::totalVertices << endl;
+        Log << endl << "Entities: " << endl;
+        for (auto entity : Entity::entities) {
+            Log << entity->name << endl;
         }
     }
 }

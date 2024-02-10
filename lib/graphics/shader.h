@@ -24,6 +24,7 @@ public:
     static glm::mat4 view;
 
     static glm::vec3 lightDirection;
+    static glm::vec3 lightColor;
 
     static glm::vec3 camera;
 

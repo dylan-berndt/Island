@@ -64,6 +64,7 @@ vec3 fog(vec3 original, vec3 pos) {
     float depthSpread = max(1.0 - (length(pos - camera) / fogDistance), 0.0);
 
     vec3 current_fog = mix(LOW_FOG, HIGH_FOG, max(normalize(pos - camera).y, 0.0));
+    current_fog *= lightColor;
 
     float heightMult = max(min(1.0 - pos.y / fogDistance, 1.0), 0.0);
 

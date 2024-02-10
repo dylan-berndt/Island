@@ -15,10 +15,15 @@ Texture2D *Window::depthTexture = nullptr;
 Texture2DArray *Window::shadowTexture;
 Square *Window::screen = nullptr;
 unsigned int Window::lightMatricesUBO;
+Font *Window::defaultFont;
+function<void(GLFWwindow*, int, int, int, int)> Window::userKeyCallback;
+function<void(GLFWwindow*)> Window::userKeyPress;
+function<void(string)> Window::userCommand;
 
-Scene World::scene;
 Camera World::camera;
 glm::vec3 World::lightDirection;
+glm::vec3 World::lightColor;
+SkyBox *World::skybox = nullptr;
 
 int shadowMapResolution = 2048;
 vector<float> ShaderProgram::shadowCascadeLevels = {50.0f, 25.0f, 15.0f, 5.0f, 2.0f};
@@ -26,19 +31,10 @@ int ShaderProgram::shadowMap;
 
 float previousFrameTime = 0.0;
 
-void GLAPIENTRY
-MessageCallback( GLenum source,
-                 GLenum type,
-                 GLuint id,
-                 GLenum severity,
-                 GLsizei length,
-                 const GLchar* message,
-                 const void* userParam )
-{
-    fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-             ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
-             type, severity, message );
-}
+bool minimised = false;
+bool console = false;
+string currentCommand;
+int scrollOffset = 0;
 
 Transform *transformFromString(string transformationData) {
     glm::vec3 transforms[3];
@@ -72,240 +68,46 @@ Transform *transformFromString(string transformationData) {
     return new Transform(transforms[0], transforms[1], transforms[2]);
 }
 
-Scene::Scene(string path) {
+void loadScene(string path) {
     ifstream scene(path);
 
     if (!scene.good()) {
-        cerr << "ERROR::SCENE Couldn't load " << path << endl;
+        Log << "\aERROR::SCENE Couldn't load " << path << "\a" << endl;
     }
 
-    entities = vector<Entity>();
-    lightDirection = glm::vec3(1.0);
+    Log.str("");
+    Commands.str("");
 
-    cout << "Loading scene " << path << endl;
+    Entity::entities = vector<Entity *>();
+    Entity::entityMap.clear();
+    Mesh::totalVertices = 0;
+
+    Log << "Loading scene " << path << endl;
 
     string line;
     while (getline(scene, line)) {
-        string type;
-        istringstream iss(line);
-        iss >> type;
+        glfwPollEvents();
+        glViewport(0, 0, Window::width, Window::height);
+        glClearColor(0.1f, 0.125f, 0.125f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if (type == "L") {
-            float x, y, z;
-            iss >> x >> y >> z;
-            lightDirection = glm::normalize(glm::vec3(x, y, z));
+        string output = Log.str();
+        Window::defaultFont->render(output, 20, Window::height - 40, glm::vec3(1.0), glm::vec3(0.8));
+
+        if (glfwWindowShouldClose(Window::self)) {
+            glfwDestroyWindow(Window::self);
+            glfwTerminate();
+            exit(0);
         }
-        if (type == "C") {
-            float x, y, z, rx, ry, rz;
-            iss >> x >> y >> z >> rx >> ry >> rz;
-            float fov, cameraNear, cameraFar;
-            iss >> fov >> cameraNear >> cameraFar;
-            camera = Camera(glm::vec3(x, y, z), glm::vec3(rx, ry, rz));
-            camera.fov = fov; camera.nearPlane = cameraNear; camera.farPlane = cameraFar;
-            camera.aspect = float(Window::width) / float(Window::height);
-        }
-        if (type == "M") {
-            string name;
-            iss >> name;
 
-            string path;
-            string section;
+        glfwSwapBuffers(Window::self);
 
-            iss >> section;
-
-            bool cull = true;
-
-            while (section[0] == '-') {
-                if (section[1] == 'C') {
-                    cull = false;
-                }
-                iss >> section;
-            }
-
-            path += section;
-            while (iss >> section && section[0] != '(') {
-                path += " " + section;
-            }
-
-            ModelComponent *modelComponent = new ModelComponent(File::getPath(path));
-            modelComponent->cullFace = cull;
-
-            string transformationData;
-            getline(iss,  transformationData);
-
-            Transform *transform = transformFromString(section + transformationData);
-
-            Entity newModel(name, transform, true);
-            newModel.addComponent(modelComponent);
-
-            entities.push_back(newModel);
-        }
+        command(line);
     }
 
     scene.close();
 }
 
-void loadScene(string path) {
-    Scene current(path);
-
-    World::scene = current;
-    World::lightDirection = current.lightDirection;
-    World::camera = current.camera;
-}
-
-void initialize() {
-    ifstream config("config.txt");
-
-    config >> Window::width >> Window::height >> Window::name;
-
-    config >> File::resourceLocation;
-    #ifdef DEBUG
-        cout << "Resource Root: " << File::resourceLocation << endl;
-    #endif
-
-    string sceneName;
-    config >> sceneName;
-
-    if (!glfwInit()) {
-        cout << "Can't Initialize GLFW" << endl;
-        exit (EXIT_FAILURE);
-    }
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    GLFWwindow *win;
-    win = glfwCreateWindow(Window::width, Window::height, Window::name.c_str(), nullptr, nullptr);
-    glfwMakeContextCurrent(win);
-
-    Window::self = win;
-
-    gladLoadGL();
-
-    glViewport(0, 0, Window::width, Window::width);
-
-    glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    #ifdef DEBUG
-        glEnable(GL_DEBUG_OUTPUT);
-        glDebugMessageCallback(MessageCallback, 0);
-    #endif
-
-    config.close();
-
-    ShaderProgram::defaultShader = new ShaderProgram(File::getPath("Resources/default"));
-    ShaderProgram::shadowShader = new ShaderProgram(File::getPath("Resources/shadow"));
-    ShaderProgram::skyboxShader = new ShaderProgram(File::getPath("Resources/skybox"));
-    ShaderProgram::postShader = new ShaderProgram(File::getPath("Resources/defaultPost"));
-    ShaderProgram::textShader = new ShaderProgram(File::getPath("Resources/text"));
-
-    Window::initializePostProcessing();
-
-    glfwSetFramebufferSizeCallback(Window::self, Window::frameBufferSizeCallback);
-
-    loadScene(File::getPath(sceneName));
-}
-
-void update(float &delta) {
-    delta = glfwGetTime() - previousFrameTime;
-    previousFrameTime = glfwGetTime();
-
-    ShaderProgram::camera = World::camera.position;
-    ShaderProgram::view = World::camera.getView();
-    ShaderProgram::projection = World::camera.getProjection();
-    ShaderProgram::lightDirection = World::lightDirection;
-    ShaderProgram::nearPlane = World::camera.nearPlane;
-    ShaderProgram::farPlane = World::camera.farPlane;
-
-    for (auto entity : World::scene.entities) {
-        entity.update(delta);
-        if (glError()) {
-            cerr << "While " << entity.name << " updating" << endl;
-        }
-    }
-    for (auto entity : Entity::entities) {
-        entity->update(delta);
-        if (glError()) {
-            cerr << "While " << entity->name << " updating" << endl;
-        }
-    }
-}
-
-void Window::draw() {
-    const auto lightMatrices = getLightSpaceMatrices();
-    glBindBuffer(GL_UNIFORM_BUFFER, lightMatricesUBO);
-    for (size_t i = 0; i < lightMatrices.size(); ++i)
-    {
-        glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4x4), sizeof(glm::mat4x4), &lightMatrices[i]);
-    }
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    shadowBuffer->bind();
-    glViewport(0, 0, shadowMapResolution, shadowMapResolution);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glCullFace(GL_FRONT);
-
-    ShaderProgram::shadowShader->use();
-
-    for (auto entity : World::scene.entities) {
-        entity.draw(*ShaderProgram::shadowShader);
-    }
-
-    ShaderProgram::shadowShader->stop();
-
-    glCullFace(GL_BACK);
-    shadowBuffer->unbind();
-
-    glViewport(0, 0, Window::width, Window::height);
-
-    postProcessingBuffer->bind();
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    for (auto entity : Entity::entities) {
-        entity->draw();
-        if (glError()) {
-            cerr << "While " << entity->name << " drawing" << endl;
-        }
-    }
-    for (auto entity : World::scene.entities) {
-        entity.draw();
-        if (glError()) {
-            cerr << "While " << entity.name << " drawing" << endl;
-        }
-    }
-
-    postProcessingBuffer->unbind();
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    ShaderProgram::postShader->use();
-
-    ShaderProgram::postShader->setInt("cascadeCount", ShaderProgram::shadowCascadeLevels.size());
-    for (size_t i = 0; i < ShaderProgram::shadowCascadeLevels.size(); ++i)
-    {
-        ShaderProgram::postShader->setFloat("cascadePlaneDistances[" + std::to_string(i) + "]",
-                                            World::camera.farPlane / ShaderProgram::shadowCascadeLevels[i]);
-    }
-
-    blit();
-
-    ShaderProgram::postShader->stop();
-}
-
-void Window::frameBufferSizeCallback(GLFWwindow *win, int width, int height) {
-    colorTexture->create(width, height, GL_RGB);
-    depthTexture->create(width, height, GL_DEPTH_COMPONENT, nullptr, GL_FLOAT);
-    Window::width = width;
-    Window::height = height;
-}
 
 void Window::initializePostProcessing() {
     colorTexture = new Texture2D(width, height, GL_RGB);
@@ -355,6 +157,431 @@ void Window::initializePostProcessing() {
 
     screen->material.setTexture2D("color", *colorTexture);
     screen->material.setTexture2D("depth", *depthTexture);
+
+    ShaderProgram::width = width;
+    ShaderProgram::height = height;
+
+    shadowBuffer->unbind();
+}
+
+void initialize() {
+    ifstream config("config.txt");
+
+    config >> Window::width >> Window::height >> Window::name;
+
+    config >> File::resourceLocation;
+
+    string sceneName;
+    config >> sceneName;
+
+    if (!glfwInit()) {
+        Log << "\aCan't Initialize GLFW\a" << endl;
+        exit (EXIT_FAILURE);
+    }
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+    GLFWwindow *win;
+    win = glfwCreateWindow(Window::width, Window::height, Window::name.c_str(), nullptr, nullptr);
+    glfwMakeContextCurrent(win);
+
+    Window::self = win;
+
+    gladLoadGL();
+
+    glViewport(0, 0, Window::width, Window::width);
+
+    glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(MessageCallback, 0);
+
+    config.close();
+
+    ShaderProgram::defaultShader = new ShaderProgram(File::getPath("Resources/default"));
+    ShaderProgram::shadowShader = new ShaderProgram(File::getPath("Resources/shadow"));
+    ShaderProgram::skyboxShader = new ShaderProgram(File::getPath("Resources/skybox"));
+    ShaderProgram::postShader = new ShaderProgram(File::getPath("Resources/defaultPost"));
+    ShaderProgram::textShader = new ShaderProgram(File::getPath("Resources/text"));
+
+    Window::initializePostProcessing();
+
+    Window::defaultFont = new Font("C:/Windows/Fonts/consola.ttf", 15);
+
+    glfwSetKeyCallback(Window::self, Window::keyCallback);
+    glfwSetCharCallback(Window::self, Window::charCallback);
+    glfwSetFramebufferSizeCallback(Window::self, Window::frameBufferSizeCallback);
+    glfwSetScrollCallback(Window::self, Window::mouseScrollCallback);
+
+    loadScene(File::getPath(sceneName));
+}
+
+void update(float &delta) {
+    delta = glfwGetTime() - previousFrameTime;
+    previousFrameTime = glfwGetTime();
+
+    ShaderProgram::camera = World::camera.position;
+    ShaderProgram::view = World::camera.getView();
+    ShaderProgram::projection = World::camera.getProjection();
+    ShaderProgram::lightDirection = World::lightDirection;
+    ShaderProgram::lightColor = World::lightColor;
+    ShaderProgram::nearPlane = World::camera.nearPlane;
+    ShaderProgram::farPlane = World::camera.farPlane;
+
+    for (auto entity : Entity::entities) {
+        entity->update(delta);
+        if (glError()) {
+            Log << "\aWhile " << entity->name << " updating\a" << endl;
+        }
+    }
+
+    glfwPollEvents();
+
+    Window::keyPress(Window::self);
+}
+
+void command(string input) {
+    istringstream iss(input);
+
+    string block;
+    iss >> block;
+
+    if (block == "LIGHT_DIRECTION") {
+        float x, y, z;
+        if (!(iss >> x >> y >> z)) {
+            Log << "\aINVALID COMMAND: " << input << "\a" << endl;
+        }
+        World::lightDirection = glm::normalize(glm::vec3(x, y, z));
+    }
+    else if (block == "LIGHT_COLOR") {
+        float x, y, z;
+        if (!(iss >> x >> y >> z)) {
+            Log << "\aINVALID COMMAND: " << input << "\a" << endl;
+        }
+        World::lightColor = glm::vec3(x, y, z);
+    }
+    else if (block == "CAMERA") {
+        float x, y, z, rx, ry, rz;
+        if (!(iss >> x >> y >> z >> rx >> ry >> rz)) {
+            Log << "\aINVALID COMMAND: " << input << "\a" << endl;
+            return;
+        }
+        float fov, cameraNear, cameraFar;
+        if (!(iss >> fov >> cameraNear >> cameraFar)) {
+            Log << "\aINVALID COMMAND: " << input << "\a" << endl;
+            return;
+        }
+        World::camera = Camera(glm::vec3(x, y, z), glm::vec3(rx, ry, rz));
+        World::camera.fov = fov; World::camera.nearPlane = cameraNear; World::camera.farPlane = cameraFar;
+        World::camera.aspect = float(Window::width) / float(Window::height);
+    }
+    else if (block == "FOV") {
+        float f;
+        if (!(iss >> f)) {
+            Log << "\aINVALID COMMAND: " << input << "\a" << endl;
+            return;
+        }
+        else {
+            World::camera.fov = f;
+        }
+    }
+    else if (block == "SKYBOX") {
+        string path;
+        iss >> path;
+
+        World::skybox = new SkyBox(File::getPath(path));
+    }
+    else if (block == "MODEL") {
+        string name;
+        if (!(iss >> name)) {
+            Log << "\aINVALID COMMAND: " << input << "\a" << endl;
+            return;
+        }
+
+        string path;
+        string section;
+
+        if (!(iss >> section)) {
+            Log << "\aINVALID COMMAND: " << input << "\a" << endl;
+            return;
+        }
+
+        bool cull = true;
+
+        while (section[0] == '-') {
+            if (section[1] == 'C') {
+                cull = false;
+            }
+            iss >> section;
+        }
+
+        path += section;
+        while (iss >> section && section[0] != '(') {
+            path += " " + section;
+        }
+
+        ModelComponent *modelComponent = new ModelComponent(File::getPath(path));
+        modelComponent->cullFace = cull;
+
+        string transformationData;
+        getline(iss,  transformationData);
+
+        Transform *transform = transformFromString(section + transformationData);
+
+        Entity *newModel = new Entity(name, transform);
+        newModel->addComponent("ModelComponent", modelComponent);
+    }
+    else if (block == "SET") {
+        string name;
+        iss >> name;
+        if (!Entity::entityMap.count(name)) {
+            Log << "\aINVALID COMMAND: " << name << " does not exist\a" << endl;
+            return;
+        }
+        Entity *edit = Entity::entityMap[name];
+
+        string componentType;
+        iss >> componentType;
+
+        string assignName;
+        iss >> assignName;
+
+        string value;
+        getline(iss, value);
+
+        Component *component = edit->getComponent(componentType);
+
+        int success;
+
+        value = value.substr(value.find_first_not_of(' '));
+
+        if (value == "true" || value == "false") {
+            success = component->assign(assignName, value == "true");
+        }
+        else if (isdigit(value.at(0)) || value[0] == '-') {
+            if (value.find(' ') == value.npos) {
+                float f = stof(value);
+                int i = stoi(value);
+                if (f != i) {
+                    success = component->assign(assignName, f);
+                }
+                else {
+                    success = component->assign(assignName, i);
+                }
+            }
+            else {
+                int n;
+                float num;
+                vector<float> nums;
+                istringstream vec(value);
+                while (vec >> num) {
+                    nums.push_back(num);
+                    n++;
+                }
+                if (n == 2) {
+                    success = component->assign(assignName, glm::vec2(nums[0], nums[1]));
+                }
+                if (n == 3) {
+                    success = component->assign(assignName, glm::vec3(nums[0], nums[1], nums[2]));
+                }
+                if (n == 4) {
+                    success = component->assign(assignName, glm::vec4(nums[0], nums[1], nums[2], nums[3]));
+                }
+            }
+        }
+        else {
+            success = component->assign(assignName, value);
+        }
+
+        if (success == 1) {
+            Log << name << "." << componentType << "." << assignName << " = " << value << endl;
+        }
+        else {
+            Log << "\aINVALID COMMAND " << input << "\a" << endl;
+            return;
+        }
+    }
+    else if (block == "LOAD") {
+        string sceneName;
+        if (!(iss >> sceneName)) {
+            Log << "\aINVALID COMMAND: " << input << "\a" << endl;
+            return;
+        }
+
+        loadScene(sceneName);
+        return;
+    }
+    else if (block == "SAVE") {
+        string fileName;
+        if (!(iss >> fileName)) {
+            Log << "\aINVALID COMMAND: " << input << "\a" << endl;
+            return;
+        }
+
+        string data = Log.str();
+        ofstream file(fileName);
+        file << Commands.rdbuf();
+
+        file.close();
+        return;
+    }
+    else {
+        if (Window::userCommand != nullptr) {
+            Window::userCommand(iss.str());
+        }
+    }
+
+    Commands << input << endl;
+}
+
+void Window::draw() {
+    if (minimised) {
+        return;
+    }
+
+    const auto lightMatrices = getLightSpaceMatrices();
+    glBindBuffer(GL_UNIFORM_BUFFER, lightMatricesUBO);
+    for (size_t i = 0; i < lightMatrices.size(); ++i)
+    {
+        glBufferSubData(GL_UNIFORM_BUFFER, i * sizeof(glm::mat4x4), sizeof(glm::mat4x4), &lightMatrices[i]);
+    }
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    shadowBuffer->bind();
+    glViewport(0, 0, shadowMapResolution, shadowMapResolution);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glCullFace(GL_FRONT);
+
+    ShaderProgram::shadowShader->use();
+
+    for (auto entity : Entity::entities) {
+        entity->draw(*ShaderProgram::shadowShader);
+    }
+
+    ShaderProgram::shadowShader->stop();
+
+    glCullFace(GL_BACK);
+    shadowBuffer->unbind();
+
+    glViewport(0, 0, Window::width, Window::height);
+
+    postProcessingBuffer->bind();
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (World::skybox != nullptr) {
+        World::skybox->draw(*ShaderProgram::skyboxShader);
+    }
+
+    for (auto entity : Entity::entities) {
+        entity->draw();
+        if (glError()) {
+            Log << "\aWhile " << entity->name << " drawing\a" << endl;
+        }
+    }
+
+    postProcessingBuffer->unbind();
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    ShaderProgram::postShader->use();
+
+    ShaderProgram::postShader->setInt("cascadeCount", ShaderProgram::shadowCascadeLevels.size());
+    for (size_t i = 0; i < ShaderProgram::shadowCascadeLevels.size(); ++i)
+    {
+        ShaderProgram::postShader->setFloat("cascadePlaneDistances[" + std::to_string(i) + "]",
+                                            World::camera.farPlane / ShaderProgram::shadowCascadeLevels[i]);
+    }
+
+    blit();
+
+    ShaderProgram::postShader->stop();
+
+    if (console) {
+        glEnable(GL_SCISSOR_TEST);
+        glClearColor(0.1f, 0.125f, 0.125f, 1.0f);
+
+        glScissor(15, height - 35, 200, 30);
+        glClear(GL_COLOR_BUFFER_BIT);
+        defaultFont->render("Console: ", 25, height - 25, glm::vec3(1.0), glm::vec3(1.0));
+
+        glScissor(15, 80, 800, height - 140);
+        glClear(GL_COLOR_BUFFER_BIT);
+        defaultFont->render(Log.str(), 25, height - 80 + scrollOffset, glm::vec3(1.0), glm::vec3(1.0));
+
+        glScissor(15, 25, 800, 30);
+        glClear(GL_COLOR_BUFFER_BIT);
+        defaultFont->render(currentCommand, 25, 35, glm::vec3(1.0), glm::vec3(1.0));
+        glDisable(GL_SCISSOR_TEST);
+    }
+
+    glfwSwapBuffers(self);
+}
+
+void Window::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+    if (userKeyCallback != nullptr && !console) {
+        userKeyCallback(window, key, scancode, action, mods);
+    }
+
+    if (action == GLFW_PRESS) {
+        if (mods & GLFW_MOD_CONTROL) {
+            if (key == GLFW_KEY_SLASH) {
+                console = !console;
+                if (!console) {
+                    currentCommand = "";
+                }
+            }
+        }
+
+        if (console) {
+            if (key == GLFW_KEY_BACKSPACE) {
+                if (currentCommand.length() > 0) {
+                    currentCommand.pop_back();
+                }
+            }
+
+            if (key == GLFW_KEY_ENTER) {
+                command(currentCommand);
+                currentCommand = "";
+            }
+        }
+    }
+}
+
+void Window::charCallback(GLFWwindow *window, unsigned int codepoint) {
+    if (console) {
+        currentCommand += char(codepoint);
+    }
+}
+
+void Window::keyPress(GLFWwindow *window) {
+    if (userKeyPress != nullptr && !console) {
+        userKeyPress(window);
+    }
+}
+
+void Window::mouseScrollCallback(GLFWwindow *window, double xOffset, double yOffset) {
+    scrollOffset -= 20 * yOffset;
+}
+
+void Window::frameBufferSizeCallback(GLFWwindow *win, int w, int h) {
+    minimised = w == 0 || h == 0;
+
+    colorTexture->create(w, h, GL_RGB);
+    depthTexture->create(w, h, GL_DEPTH_COMPONENT, nullptr, GL_FLOAT);
+    width = w;
+    height = h;
+
+    ShaderProgram::width = w;
+    ShaderProgram::height = h;
 }
 
 std::vector<glm::vec4> getFrustumCornersWorldSpace(const glm::mat4& projview)

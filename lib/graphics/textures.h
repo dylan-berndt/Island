@@ -8,6 +8,8 @@ class CubeMap {
 public:
     void bind() {glBindTexture(GL_TEXTURE_CUBE_MAP, self);};
     explicit CubeMap(std::vector<std::string> faces);
+    explicit CubeMap(std::string);
+    void create(std::vector<std::string>);
     CubeMap() {self = 0;};
 private:
     unsigned int self;

@@ -19,13 +19,16 @@ struct Character {
 class Font {
 public:
     std::map<char, Character> characters;
+    int lineHeight = 0;
 
     Font(std::string fileName, int fontSize = 12);
     void initialize(int);
 
-    void render(std::string text, float x, float y, float = 1.0, glm::vec3 = glm::vec3(0.0));
+    void render(std::string text, float x, float y, glm::vec3 = glm::vec3(1.0), glm::vec3 = glm::vec3(0.0),
+                ShaderProgram &shader = *ShaderProgram::textShader);
 
 private:
+    DynamicMesh mesh;
     FT_Face face;
 };
 

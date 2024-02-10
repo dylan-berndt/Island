@@ -7,6 +7,7 @@ using namespace std;
 glm::mat4 ShaderProgram::projection;
 glm::mat4 ShaderProgram::view;
 glm::vec3 ShaderProgram::lightDirection;
+glm::vec3 ShaderProgram::lightColor;
 glm::vec3 ShaderProgram::camera;
 int ShaderProgram::width;
 int ShaderProgram::height;
@@ -46,7 +47,7 @@ ShaderProgram::ShaderProgram(string path) {
 
         if (file.good()) {
             #ifdef DEBUG
-                cout << "Loading shader " << path + type.first << endl;
+                Log << "Loaded shader " << path + type.first << endl;
             #endif
             openShader(path + type.first, type.second);
         }
@@ -91,10 +92,11 @@ void ShaderProgram::openShader(string name, int type) const {
         vector<GLchar> errorLog(maxLength);
         glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
 
-        cerr << "ERROR::SHADER Compilation of " << name << " failed" << endl;
+        Log << "\aERROR::SHADER Compilation of " << name << " failed\a" << endl;
         for (GLchar i: errorLog) {
-            cout << i;
+            Log << i;
         }
+        Log << "\a" << endl;
 
         glDeleteShader(shader);
         exit(-1);
@@ -114,10 +116,11 @@ void ShaderProgram::compile() const {
         vector<GLchar> errorLog(maxLength);
         glGetProgramInfoLog(self, maxLength, &maxLength, &errorLog[0]);
 
-        cerr << "ERROR::SHADER Linking failed" << endl;
+        Log << "\aERROR::SHADER Linking failed" << endl;
         for (GLchar i: errorLog) {
-            cout << i;
+            Log << i;
         }
+        Log << "\a" << endl;
 
         glDeleteShader(self);
         exit(-1);
@@ -138,6 +141,7 @@ void ShaderProgram::use() {
     setMat4("view", ShaderProgram::view);
     setVec3("camera", ShaderProgram::camera);
     setVec3("lightDirection", ShaderProgram::lightDirection);
+    setVec3("lightColor", ShaderProgram::lightColor);
     setFloat("time", float(glfwGetTime()));
 
     setInt("cascadeCount", shadowCascadeLevels.size());

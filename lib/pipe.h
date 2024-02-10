@@ -12,23 +12,16 @@ void initialize();
 
 void update(float &delta);
 
+void command(std::string);
+
 std::vector<glm::mat4> getLightSpaceMatrices();
-
-class Scene {
-public:
-    std::vector<Entity> entities;
-    glm::vec3 lightDirection;
-    Camera camera;
-
-    Scene(const std::string sceneName);
-    Scene() {entities = std::vector<Entity>(); lightDirection = glm::vec3(1.0);};
-};
 
 class World {
 public:
     static Camera camera;
-    static Scene scene;
     static glm::vec3 lightDirection;
+    static glm::vec3 lightColor;
+    static SkyBox *skybox;
 };
 
 class Window {
@@ -40,7 +33,26 @@ public:
 
     static void draw();
 
+    static std::function<void(std::string)> userCommand;
+    static void setUserCommand(std::function<void(std::string)>func) {
+        userCommand = func;
+    }
+
+    static std::function<void(GLFWwindow*, int, int, int, int)> userKeyCallback;
+    static void setUserKeyCallback(std::function<void(GLFWwindow*, int, int, int, int)> func) {
+        userKeyCallback = func;
+    }
+
+    static std::function<void(GLFWwindow*)> userKeyPress;
+    static void setUserKeyPress(std::function<void(GLFWwindow*)> func) {
+        userKeyPress = func;
+    }
+
     static void frameBufferSizeCallback(GLFWwindow *win, int width, int height);
+    static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
+    static void charCallback(GLFWwindow *window, unsigned int);
+    static void keyPress(GLFWwindow *window);
+    static void mouseScrollCallback(GLFWwindow *window, double xOffset, double yOffset);
 
     static void initializePostProcessing();
     static void attachPostProcessingTexture(Texture2D tex, int attachment) {
@@ -50,6 +62,8 @@ public:
     static void blit() {
         screen->draw(*ShaderProgram::postShader);
     };
+
+    static Font *defaultFont;
 
 private:
     static Square *screen;

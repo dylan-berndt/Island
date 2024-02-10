@@ -3,17 +3,17 @@
 
 using namespace std;
 
-Font::Font(string path, int fontSize) {
+Font::Font(string path, int fontSize) : mesh(vector<Vertex>(), vector<int>()) {
     FT_Library ft;
     if (FT_Init_FreeType(&ft))
     {
-        cerr << "ERROR::FREETYPE Could not init FreeType Library" << endl;
+        Log << "\aERROR::FREETYPE Could not init FreeType Library\a" << endl;
     }
 
     FT_Face f;
     if (FT_New_Face(ft, path.c_str(), 0, &f))
     {
-        cerr << "ERROR::FREETYPE Failed to load font " << path << endl;
+        Log << "\aERROR::FREETYPE Failed to load font " << path << "\a" << endl;
     }
 
     face = f;
@@ -21,6 +21,17 @@ Font::Font(string path, int fontSize) {
     initialize(fontSize);
 
     FT_Done_FreeType(ft);
+
+    vector<Vertex> v = {
+            Vertex(glm::vec3(-1.0, 1.0, 0.0), glm::vec2(0.0, 1.0)),
+            Vertex(glm::vec3(1.0, 1.0, 0.0), glm::vec2(1.0, 1.0)),
+            Vertex(glm::vec3(-1.0, -1.0, 0.0), glm::vec2(0.0, 0.0)),
+            Vertex(glm::vec3(1.0, -1.0, 0.0), glm::vec2(1.0, 0.0))
+    };
+
+    vector<int> i = {0, 1, 2, 1, 3, 2};
+
+    mesh.resetMesh(v, i);
 }
 
 void Font::initialize(int fontSize) {
@@ -28,9 +39,9 @@ void Font::initialize(int fontSize) {
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    for (unsigned char c = 32; c < 127; c++) {
+    for (unsigned char c = 0; c < 127; c++) {
         if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
-            cerr << "ERROR::FREETYPE Failed to load Glyph " << c << endl;
+            Log << "\aERROR::FREETYPE Failed to load Glyph " << c << "\a" << endl;
             continue;
         }
         unsigned int texture;
@@ -75,14 +86,68 @@ void Font::initialize(int fontSize) {
         characters.insert(std::pair<char, Character>(c, character));
     }
 
+    lineHeight = face->size->metrics.height;
+
     FT_Done_Face(face);
 }
 
-void Font::render(string text, float x, float y, float scale, glm::vec3 color) {
-    ShaderProgram::textShader->use();
-    ShaderProgram::textShader->setVec3("textColor", color);
+void Font::render(string text, float x, float y, glm::vec3 scale, glm::vec3 color, ShaderProgram &shader) {
+    shader.use();
+
+    float left = x;
+    bool alert = false;
+
+    shader.setVec3("textColor", color);
+    glm::mat4 orthographic = glm::ortho(0.0f, float(ShaderProgram::width), 0.0f, float(ShaderProgram::height));
+    shader.setMat4("textProjection", orthographic);
+
     glActiveTexture(GL_TEXTURE0);
 
+    mesh.bind();
+
+    std::string::const_iterator c;
+    for (c = text.begin(); c != text.end(); c++)
+    {
+        if (*c == '\n') {
+            x = left;
+            y -= (lineHeight >> 6) * scale.y;
+            continue;
+        }
+
+        if (*c == '\a') {
+            alert = !alert;
+            shader.setVec3("textColor", alert ? glm::vec3(1.0, 0.0, 0.0) : color);
+            continue;
+        }
+
+        Character ch = characters[*c];
+
+        float xpos = x + ch.Bearing.x * scale.x;
+        float ypos = y - (ch.Size.y - ch.Bearing.y) * scale.y;
+
+        float w = ch.Size.x * scale.x;
+        float h = ch.Size.y * scale.y;
+
+        vector<Vertex> vertices = {
+                Vertex(glm::vec3(xpos, ypos, 0.0), glm::vec2(0.0, 1.0)),
+                Vertex(glm::vec3(xpos + w, ypos, 0.0), glm::vec2(1.0, 1.0)),
+                Vertex(glm::vec3(xpos, ypos + h, 0.0), glm::vec2(0.0, 0.0)),
+                Vertex(glm::vec3(xpos + w, ypos + h, 0.0), glm::vec2(1.0, 0.0))
+        };
+
+        glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+
+        mesh.updateSubData(vertices);
+
+        mesh.draw(shader);
+
+        x += (ch.Advance >> 6) * scale.x;
+    }
+
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    shader.stop();
 }
 
 

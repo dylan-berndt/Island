@@ -3,7 +3,7 @@ out vec4 FragColor;
 
 in vec3 FragPos;
 
-#define WATER_COLOR vec3(0.0, 0.05, 0.2)
+#define WATER_COLOR vec3(0.0, 0.2, 0.3)
 
 #define AMBIENT_LIGHT 0.5
 
@@ -73,13 +73,13 @@ void main() {
 
     float shade = shadow(FragPos, 3) * 0.6;
 
-    vec3 result = (ambient + diffuse + specular) * WATER_COLOR;
+    vec3 result = (ambient + (1.0 - shade) * (diffuse + specular)) * WATER_COLOR;
 
-    result = mix(result, skyReflection, 0.5);
+    result = mix(result, skyReflection, 0.25);
 
     float height = max(getWaves(FragPos.xz) - 0.4, -0.2);
 
-    result += vec3(1.0, 1.0, 1.0) * height;
+    result += lightColor * height;
 
-    FragColor = vec4(result * (1.0 - shade), 1.0);
+    FragColor = vec4(result, 1.0);
 }
