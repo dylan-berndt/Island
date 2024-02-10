@@ -41,9 +41,9 @@ Command line is implemented. All commands can be found in the README along with 
 model loading, and scene loading and saving. Also made a few compatibility adjustments, and added a night scene which can be loaded with 
 the command LOAD Scenes/night.scene
 
+![ezgif-3-37eacf1cf7](https://github.com/dylan-berndt/Island/assets/33700799/8e36c4bd-bafa-43c5-bfdb-f42e23cf20b0)
 ![ezgif-3-d2f0349af4](https://github.com/dylan-berndt/Island/assets/33700799/41a9b7a9-8344-4d7d-9fd1-09acdd63f1ee)
 ![Screenshot (70)](https://github.com/dylan-berndt/Island/assets/33700799/67a139be-ee42-4ed8-9141-9e3ba53139f7)
-![ezgif-3-37eacf1cf7](https://github.com/dylan-berndt/Island/assets/33700799/8e36c4bd-bafa-43c5-bfdb-f42e23cf20b0)
 
 ## 2/6/24
 
