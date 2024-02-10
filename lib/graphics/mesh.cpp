@@ -26,8 +26,24 @@ void Material::use(ShaderProgram &shader) {
     }
 
     int num = 0;
+    if (!textures.count("baseTexture")) {
+         shader.setInt("baseTexture.valid", 0);
+        glActiveTexture(GL_TEXTURE0 + num);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        shader.setInt("baseTexture.id", num);
+        num++;
+    }
+    if (!textures.count("bumpTexture")) {
+        shader.setInt("bumpTexture.valid", 0);
+        glActiveTexture(GL_TEXTURE0 + num);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        shader.setInt("bumpTexture.id", num);
+        num++;
+    }
+
     for (auto pair : textures) {
         pair.second.activate(GL_TEXTURE0 + num);
+        shader.setInt(pair.first + ".valid", 1);
         shader.setInt(pair.first + ".id", num);
         shader.setVec3(pair.first + ".offset", pair.second.offset);
         shader.setVec3(pair.first + ".scale", pair.second.scale);
@@ -41,12 +57,16 @@ void Material::use(ShaderProgram &shader) {
         num++;
     }
 
+    for (auto pair : cubeMaps) {
+        glActiveTexture(GL_TEXTURE0 + num);
+        pair.second.bind();
+        shader.setInt(pair.first, num);
+        num++;
+    }
+
     glActiveTexture(GL_TEXTURE0 + num);
     glBindTexture(GL_TEXTURE_2D_ARRAY, ShaderProgram::shadowMap);
-
-    for (auto pair : cubeMaps) {
-        pair.second.bind();
-    }
+    shader.setInt("shadowMap", num);
 }
 
 void Mesh::resetMesh(vector<Vertex> v, vector<int> i) {

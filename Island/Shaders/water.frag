@@ -12,6 +12,8 @@ in vec3 FragPos;
 
 uniform samplerCube sky;
 
+uniform float specularStrength = 1.0;
+
 vec2 wavedx(vec2 position, vec2 direction, float frequency, float timeshift) {
     float x = dot(direction, position) * frequency + timeshift;
     float wave = exp(sin(x) - 1.0);
@@ -58,11 +60,10 @@ void main() {
 
     vec3 normal = normal(FragPos.xz, 0.001, 1.0);
 
-    float specularStrength = 1.0;
     vec3 viewDir = normalize(camera - FragPos);
     vec3 reflectDir = reflect(lightDirection, normal);
 
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 4);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
     vec3 specular = specularStrength * spec * lightColor;
 
     float diffuse = max(dot(normal, -lightDirection), 0.0);

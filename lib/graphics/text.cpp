@@ -91,7 +91,7 @@ void Font::initialize(int fontSize) {
     FT_Done_Face(face);
 }
 
-void Font::render(string text, float x, float y, glm::vec3 scale, glm::vec3 color, ShaderProgram &shader) {
+void Font::render(string text, float x, float y, glm::vec3 scale, glm::vec3 color, ShaderProgram &shader, float wrap) {
     shader.use();
 
     float left = x;
@@ -101,14 +101,14 @@ void Font::render(string text, float x, float y, glm::vec3 scale, glm::vec3 colo
     glm::mat4 orthographic = glm::ortho(0.0f, float(ShaderProgram::width), 0.0f, float(ShaderProgram::height));
     shader.setMat4("textProjection", orthographic);
 
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE2);
 
     mesh.bind();
 
     std::string::const_iterator c;
     for (c = text.begin(); c != text.end(); c++)
     {
-        if (*c == '\n') {
+        if (*c == '\n' || (wrap != -1 && x > wrap && *c == ' ')) {
             x = left;
             y -= (lineHeight >> 6) * scale.y;
             continue;
@@ -136,6 +136,7 @@ void Font::render(string text, float x, float y, glm::vec3 scale, glm::vec3 colo
         };
 
         glBindTexture(GL_TEXTURE_2D, ch.TextureID);
+        shader.setInt("text", 2);
 
         mesh.updateSubData(vertices);
 

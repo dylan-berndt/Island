@@ -174,6 +174,12 @@ void initialize() {
     string sceneName;
     config >> sceneName;
 
+    int flag;
+    for (int i = 0; i < 3; i++) {
+        config >> flag;
+        severityFlags.push_back(flag);
+    }
+
     if (!glfwInit()) {
         Log << "\aCan't Initialize GLFW\a" << endl;
         exit (EXIT_FAILURE);
@@ -415,8 +421,8 @@ void command(string input) {
             Log << "\aINVALID COMMAND: " << input << "\a" << endl;
             return;
         }
-
-        loadScene(sceneName);
+//
+        loadScene(File::getPath(sceneName));
         return;
     }
     else if (block == "SAVE") {
@@ -515,7 +521,8 @@ void Window::draw() {
 
         glScissor(15, 80, 800, height - 140);
         glClear(GL_COLOR_BUFFER_BIT);
-        defaultFont->render(Log.str(), 25, height - 80 + scrollOffset, glm::vec3(1.0), glm::vec3(1.0));
+        defaultFont->render(Log.str(), 25, height - 80 + scrollOffset, glm::vec3(1.0), glm::vec3(1.0),
+                            *ShaderProgram::textShader, 600);
 
         glScissor(15, 25, 800, 30);
         glClear(GL_COLOR_BUFFER_BIT);

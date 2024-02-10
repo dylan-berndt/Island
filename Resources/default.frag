@@ -28,12 +28,15 @@ void main() {
 
     vec3 ambient = AMBIENT * lightColor;
 
-    vec3 bitangent = cross(Normal, Tangent);
-    mat3 tbn = mat3(Tangent, bitangent, Normal);
+    vec3 normal = Normal;
+    if (bumpTexture.valid == 1) {
+        vec3 bitangent = cross(Normal, Tangent);
+        mat3 tbn = mat3(Tangent, bitangent, Normal);
 
-    vec3 texNormal = texture(bumpTexture.id, bumpTransformCoords).xyz;
-    texNormal = texNormal * 2.0 - 1.0;
-    vec3 normal = tbn * (texNormal * bumpTexture.bumpMultiplier);
+        vec3 texNormal = texture(bumpTexture.id, bumpTransformCoords).xyz;
+        texNormal = texNormal * 2.0 - 1.0;
+        normal = tbn * (texNormal * bumpTexture.bumpMultiplier);
+    }
 
     float specularStrength = 1.0;
     vec3 viewDir = normalize(camera - FragPos);

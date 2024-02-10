@@ -25,7 +25,7 @@ public:
     void initialize(int);
 
     void render(std::string text, float x, float y, glm::vec3 = glm::vec3(1.0), glm::vec3 = glm::vec3(0.0),
-                ShaderProgram &shader = *ShaderProgram::textShader);
+                ShaderProgram &shader = *ShaderProgram::textShader, float wrap = -1);
 
 private:
     DynamicMesh mesh;

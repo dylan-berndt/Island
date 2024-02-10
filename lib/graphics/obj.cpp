@@ -65,7 +65,9 @@ void SkyBox::draw(ShaderProgram &shader) {
 
     bind();
 
+    glActiveTexture(GL_TEXTURE2);
     cubeMap.bind();
+    shader.setInt("skybox", 2);
 
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 

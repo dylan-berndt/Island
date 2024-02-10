@@ -15,7 +15,7 @@ uniform Texture depth;
 float fogDensity = 1.5;
 float fogDistance = 400.0;
 
-float bloomEffect = 0.5;
+uniform float bloomEffect = 0.5;
 uniform int bloomKernelSize = 4;
 float bloomKernelSizeMultiplier = 4.0;
 

@@ -5,6 +5,8 @@ std::string File::resourceLocation;
 std::stringstream Log;
 std::stringstream Commands;
 
+std::vector<int> severityFlags;
+
 std::ostream& operator<< (std::ostream& os, glm::vec1 v) {
     os << v.x;
     return os;
@@ -67,10 +69,60 @@ MessageCallback( GLenum source,
                  const GLchar* message,
                  const void* userParam )
 {
-    Log << "\aGL CALLBACK: " << (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "")
-        << " type = 0x" << type
-        << ", severity = 0x" << severity
+    std::string errorType;
+    switch (type) {
+        case GL_DEBUG_TYPE_ERROR:
+            errorType = "ERROR";
+            break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+            errorType = "DEPRECATED BEHAVIOR";
+            break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+            errorType = "UNDEFINED BEHAVIOR";
+            break;
+        case GL_DEBUG_TYPE_PORTABILITY:
+            errorType = "PORTABILITY";
+            break;
+        case GL_DEBUG_TYPE_PERFORMANCE:
+            errorType = "PERFORMANCE";
+            break;
+        case GL_DEBUG_TYPE_OTHER:
+            errorType = "OTHER";
+            break;
+    }
+
+    int num = 0;
+    std::string errorSeverity;
+    switch (severity) {
+        case GL_DEBUG_SEVERITY_LOW:
+            errorSeverity = "LOW";
+            num = 0;
+            break;
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            errorSeverity = "MEDIUM";
+            num = 1;
+            break;
+        case GL_DEBUG_SEVERITY_HIGH:
+            errorSeverity = "HIGH";
+            num = 2;
+            break;
+    }
+
+    int show = severityFlags[num];
+
+    if (show == 0) {
+        return;
+    }
+    if (show == 2) {
+        Log << "\a";
+    }
+    Log << "GL CALLBACK: " << (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "")
+        << " type = " << errorType
+        << ", severity = " << errorSeverity
         << ", message = " << message
-        << "\a" << std::endl;
+         << std::endl;
+    if (show == 2) {
+        Log << "\a";
+    }
 }
 

@@ -92,11 +92,10 @@ void ShaderProgram::openShader(string name, int type) const {
         vector<GLchar> errorLog(maxLength);
         glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
 
-        Log << "\aERROR::SHADER Compilation of " << name << " failed\a" << endl;
+        cerr << "ERROR::SHADER Compilation of " << name << " failed" << endl;
         for (GLchar i: errorLog) {
-            Log << i;
+            cerr << i;
         }
-        Log << "\a" << endl;
 
         glDeleteShader(shader);
         exit(-1);
@@ -116,11 +115,10 @@ void ShaderProgram::compile() const {
         vector<GLchar> errorLog(maxLength);
         glGetProgramInfoLog(self, maxLength, &maxLength, &errorLog[0]);
 
-        Log << "\aERROR::SHADER Linking failed" << endl;
+        cerr << "ERROR::SHADER Linking failed" << endl;
         for (GLchar i: errorLog) {
-            Log << i;
+            cerr << i;
         }
-        Log << "\a" << endl;
 
         glDeleteShader(self);
         exit(-1);
@@ -157,26 +155,26 @@ void ShaderProgram::stop() {
     used = false;
 }
 
-void ShaderProgram::setBool(const string& name, bool value) const {
-    glUniform1i(glGetUniformLocation(self, name.c_str()), (int)value);
+void ShaderProgram::setBool(const string& n, bool value) const {
+    glUniform1i(glGetUniformLocation(self, n.c_str()), (int)value);
 }
 
-void ShaderProgram::setInt(const string& name, int value) const {
-    glUniform1i(glGetUniformLocation(self, name.c_str()), value);
+void ShaderProgram::setInt(const string& n, int value) const {
+    glUniform1i(glGetUniformLocation(self, n.c_str()), value);
 }
 
-void ShaderProgram::setFloat(const string& name, float value) const {
-    glUniform1f(glGetUniformLocation(self, name.c_str()), value);
+void ShaderProgram::setFloat(const string& n, float value) const {
+    glUniform1f(glGetUniformLocation(self, n.c_str()), value);
 }
 
-void ShaderProgram::setVec2(const string& name, glm::vec2 value) const {
-    glUniform2fv(glGetUniformLocation(self, name.c_str()), 1, glm::value_ptr(value));
+void ShaderProgram::setVec2(const string& n, glm::vec2 value) const {
+    glUniform2fv(glGetUniformLocation(self, n.c_str()), 1, glm::value_ptr(value));
 }
 
-void ShaderProgram::setVec3(const string& name, glm::vec3 value) const {
-    glUniform3fv(glGetUniformLocation(self, name.c_str()), 1, glm::value_ptr(value));
+void ShaderProgram::setVec3(const string& n, glm::vec3 value) const {
+    glUniform3fv(glGetUniformLocation(self, n.c_str()), 1, glm::value_ptr(value));
 }
 
-void ShaderProgram::setMat4(const string& name, glm::mat4 value) const {
-    glUniformMatrix4fv(glGetUniformLocation(self, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+void ShaderProgram::setMat4(const string& n, glm::mat4 value) const {
+    glUniformMatrix4fv(glGetUniformLocation(self, n.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }

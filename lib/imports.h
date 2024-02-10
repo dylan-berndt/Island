@@ -50,4 +50,6 @@ MessageCallback( GLenum source,
                  const GLchar* message,
                  const void* userParam );
 
+extern std::vector<int> severityFlags;
+
 #endif //PIPE_BACK_H

@@ -12,6 +12,7 @@ uniform int height;
 uniform float time;
 
 struct Texture {
+    int valid;
     sampler2D id;
     vec3 offset;
     vec3 scale;

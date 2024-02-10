@@ -193,12 +193,20 @@ void myCommand(string command) {
         ShaderProgram::postShader->setFloat("outlineThickness", size);
         ShaderProgram::postShader->stop();
     }
-    else if (type == "BLOOM") {
+    else if (type == "BLOOM_KERNEL") {
         int size;
         iss >> size;
 
         ShaderProgram::postShader->use();
         ShaderProgram::postShader->setInt("bloomKernelSize", size);
+        ShaderProgram::postShader->stop();
+    }
+    else if (type == "BLOOM_EFFECT") {
+        float effect;
+        iss >> effect;
+
+        ShaderProgram::postShader->use();
+        ShaderProgram::postShader->setFloat("bloomEffect", effect);
         ShaderProgram::postShader->stop();
     }
     else if (type == "WATER") {
@@ -212,6 +220,18 @@ void myCommand(string command) {
         MeshComponent<Mesh> *mesh = new MeshComponent<Mesh>(waterMesh, water_shader);
         mesh->getMaterial().setCubeMap("sky", skyMap);
         water->addComponent("MeshComponent", mesh);
+    }
+    else if (type == "WATER_SPECULAR") {
+        float effect;
+        iss >> effect;
+
+        Component *waterComponent = Entity::entityMap["water"]->getComponent("MeshComponent");
+        MeshComponent<Mesh> *waterMesh = dynamic_cast<MeshComponent<Mesh> *>(waterComponent);
+        ShaderProgram waterShader = waterMesh->shader;
+
+        waterShader.use();
+        waterShader.setFloat("specularStrength", effect);
+        waterShader.stop();
     }
     else if (type == "STATS") {
         Log << endl << "Total vertices: " << Mesh::totalVertices << endl;
