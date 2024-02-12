@@ -32,7 +32,7 @@ other graphics programming projects.
 
 * Specular mapping
 * Schlick-Fresnel lighting/reflections
-* Editor console
+* Point Lights
 * Frustum Culling
 
 ## 2/10/24
