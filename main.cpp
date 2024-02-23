@@ -29,12 +29,20 @@ int main() {
 
     ShaderProgram::postShader = &post_shader;
 
+    Entity *camera = Entity::entityMap["Camera"];
+    Transform *cameraTransform = camera->transform();
+
+    Entity light("light");
+    light.addComponent("LightComponent", new LightComponent(glm::vec3(1.0)));
+
     while (!glfwWindowShouldClose(Window::self)) {
         update(delta);
 
+
+
         if (Entity::entityMap.count("water")) {
-            Entity::entityMap["water"]->transform()->position.x = float(int(World::camera.position.x / 2.0f)) * 2.0f;
-            Entity::entityMap["water"]->transform()->position.z = float(int(World::camera.position.z / 2.0f)) * 2.0f;
+            Entity::entityMap["water"]->transform()->position.x = float(int(cameraTransform->position.x / 2.0f)) * 2.0f;
+            Entity::entityMap["water"]->transform()->position.z = float(int(cameraTransform->position.z / 2.0f)) * 2.0f;
         }
 
         Window::draw();
@@ -106,8 +114,11 @@ void keyPress(GLFWwindow *window) {
         speed *= speedMultiplier;
     }
 
+    Entity *camera = Entity::entityMap["Camera"];
+    Transform *cameraTransform = camera->transform();
+
     if (movement.x != 0.0 || movement.y != 0.0 || movement.z != 0.0) {
-        World::camera.position += glm::normalize(movement) * speed * delta;
+        cameraTransform->position += glm::normalize(movement) * speed * delta;
     }
 }
 
@@ -147,91 +158,46 @@ void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods
     }
 }
 
+class Water : public Component {
+public:
+    void update(float d) override {
+        Entity *camera = Entity::entityMap["Camera"];
+        Transform *cameraTransform = camera->transform();
+
+        Entity* ptr = Entity::get(entity);
+        ptr->transform()->position.x = float(int(cameraTransform->position.x / 2.0f)) * 2.0f;
+        ptr->transform()->position.z = float(int(cameraTransform->position.x / 2.0f)) * 2.0f;
+    };
+    void draw() override {};
+    void draw(ShaderProgram &) override {};
+};
+
 void myCommand(string command) {
     istringstream iss(command);
 
     string type;
     iss >> type;
 
-    if (type == "SATURATION") {
-        float sat;
-        iss >> sat;
-
-        ShaderProgram::postShader->use();
-        ShaderProgram::postShader->setFloat("saturation", sat);
-        ShaderProgram::postShader->stop();
-    }
-    else if (type == "HUE") {
-        float hue;
-        iss >> hue;
-
-        ShaderProgram::postShader->use();
-        ShaderProgram::postShader->setFloat("hue", hue);
-        ShaderProgram::postShader->stop();
-    }
-    else if (type == "VALUE") {
-        float val;
-        iss >> val;
-
-        ShaderProgram::postShader->use();
-        ShaderProgram::postShader->setFloat("value", val);
-        ShaderProgram::postShader->stop();
-    }
-    else if (type == "PIXEL") {
-        int size;
-        iss >> size;
-
-        ShaderProgram::postShader->use();
-        ShaderProgram::postShader->setInt("pixelSize", size);
-        ShaderProgram::postShader->stop();
-    }
-    else if (type == "OUTLINE") {
-        float size;
-        iss >> size;
-
-        ShaderProgram::postShader->use();
-        ShaderProgram::postShader->setFloat("outlineThickness", size);
-        ShaderProgram::postShader->stop();
-    }
-    else if (type == "BLOOM_KERNEL") {
-        int size;
-        iss >> size;
-
-        ShaderProgram::postShader->use();
-        ShaderProgram::postShader->setInt("bloomKernelSize", size);
-        ShaderProgram::postShader->stop();
-    }
-    else if (type == "BLOOM_EFFECT") {
-        float effect;
-        iss >> effect;
-
-        ShaderProgram::postShader->use();
-        ShaderProgram::postShader->setFloat("bloomEffect", effect);
-        ShaderProgram::postShader->stop();
-    }
-    else if (type == "WATER") {
+    if (type == "WATER") {
         ShaderProgram water_shader(File::getPath("Island/Shaders/water"));
         CubeMap skyMap(File::getPath("Island/Skybox/Day/"));
 
-        int amount = 400;
+        int amount;
+        iss >> amount;
+
+        double scale;
+        iss >> scale;
+
+        double y;
+        iss >> y;
+
         Mesh waterMesh = flatMesh(amount, amount);
-        Transform *waterTransform = new Transform(glm::vec3(0.0, -2.5, 0.0), glm::vec3(0.0), glm::vec3(400.0, 1.0, 400.0));
-        Entity *water = new Entity("water", waterTransform);
+        Transform *waterTransform = new Transform(glm::vec3(0.0, -2.5, 0.0), glm::vec3(0.0), glm::vec3(scale, 1.0, scale));
+        Entity *water = new Entity("water" + to_string(amount) + to_string(scale), waterTransform);
         MeshComponent<Mesh> *mesh = new MeshComponent<Mesh>(waterMesh, water_shader);
-        mesh->getMaterial().setCubeMap("sky", skyMap);
+        mesh->getMaterial().assign("sky", skyMap);
         water->addComponent("MeshComponent", mesh);
-    }
-    else if (type == "WATER_SPECULAR") {
-        float effect;
-        iss >> effect;
-
-        Component *waterComponent = Entity::entityMap["water"]->getComponent("MeshComponent");
-        MeshComponent<Mesh> *waterMesh = dynamic_cast<MeshComponent<Mesh> *>(waterComponent);
-        ShaderProgram waterShader = waterMesh->shader;
-
-        waterShader.use();
-        waterShader.setFloat("specularStrength", effect);
-        waterShader.stop();
+        water->addComponent("WaterComponent", new Water());
     }
     else if (type == "STATS") {
         Log << endl << "Total vertices: " << Mesh::totalVertices << endl;

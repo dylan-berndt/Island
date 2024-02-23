@@ -35,6 +35,7 @@ bool minimised = false;
 bool console = false;
 string currentCommand;
 int scrollOffset = 0;
+bool wireframe = false;
 
 Transform *transformFromString(string transformationData) {
     glm::vec3 transforms[3];
@@ -73,6 +74,7 @@ void loadScene(string path) {
 
     if (!scene.good()) {
         Log << "\aERROR::SCENE Couldn't load " << path << "\a" << endl;
+        return;
     }
 
     Log.str("");
@@ -80,7 +82,6 @@ void loadScene(string path) {
 
     Entity::entities = vector<Entity *>();
     Entity::entityMap.clear();
-    Mesh::totalVertices = 0;
 
     Log << "Loading scene " << path << endl;
 
@@ -155,8 +156,8 @@ void Window::initializePostProcessing() {
 
     ShaderProgram::shadowMap = shadowTexture->id();
 
-    screen->material.setTexture2D("color", *colorTexture);
-    screen->material.setTexture2D("depth", *depthTexture);
+    screen->material.assign("color", *colorTexture);
+    screen->material.assign("depth", *depthTexture);
 
     ShaderProgram::width = width;
     ShaderProgram::height = height;
@@ -234,7 +235,10 @@ void update(float &delta) {
     delta = glfwGetTime() - previousFrameTime;
     previousFrameTime = glfwGetTime();
 
-    ShaderProgram::camera = World::camera.position;
+    Entity *camera = Entity::entityMap["Camera"];
+    Transform *cameraTransform = camera->transform();
+
+    ShaderProgram::camera = cameraTransform->position;
     ShaderProgram::view = World::camera.getView();
     ShaderProgram::projection = World::camera.getProjection();
     ShaderProgram::lightDirection = World::lightDirection;
@@ -254,20 +258,67 @@ void update(float &delta) {
     Window::keyPress(Window::self);
 }
 
+template <class T>
+int performAssign(T& instance, string assignName, string value) {
+    int success;
+
+    value = value.substr(value.find_first_not_of(' '));
+
+    if (value == "true" || value == "false") {
+        success = instance.assign(assignName, value == "true");
+    }
+    else if (isdigit(value.at(0)) || value[0] == '-') {
+        if (value.find(' ') == value.npos) {
+            if (value.find('.') != value.npos || value.find('f') != value.npos) {
+                float f = stof(value);
+                success = instance.assign(assignName, f);
+            }
+            else {
+                int i = stoi(value);
+                success = instance.assign(assignName, i);
+            }
+        }
+        else {
+            int n;
+            float num;
+            vector<float> nums;
+            istringstream vec(value);
+            while (vec >> num) {
+                nums.push_back(num);
+                n++;
+            }
+            if (n == 2) {
+                success = instance.assign(assignName, glm::vec2(nums[0], nums[1]));
+            }
+            if (n == 3) {
+                success = instance.assign(assignName, glm::vec3(nums[0], nums[1], nums[2]));
+            }
+            if (n == 4) {
+                success = instance.assign(assignName, glm::vec4(nums[0], nums[1], nums[2], nums[3]));
+            }
+        }
+    }
+    else {
+        success = instance.assign(assignName, value);
+    }
+
+    return success;
+}
+
 void command(string input) {
     istringstream iss(input);
 
     string block;
     iss >> block;
 
-    if (block == "LIGHT_DIRECTION") {
+    if (block == "GLOBAL_LIGHT_DIRECTION") {
         float x, y, z;
         if (!(iss >> x >> y >> z)) {
             Log << "\aINVALID COMMAND: " << input << "\a" << endl;
         }
         World::lightDirection = glm::normalize(glm::vec3(x, y, z));
     }
-    else if (block == "LIGHT_COLOR") {
+    else if (block == "GLOBAL_LIGHT_COLOR") {
         float x, y, z;
         if (!(iss >> x >> y >> z)) {
             Log << "\aINVALID COMMAND: " << input << "\a" << endl;
@@ -285,9 +336,15 @@ void command(string input) {
             Log << "\aINVALID COMMAND: " << input << "\a" << endl;
             return;
         }
-        World::camera = Camera(glm::vec3(x, y, z), glm::vec3(rx, ry, rz));
+        World::camera = Camera();
         World::camera.fov = fov; World::camera.nearPlane = cameraNear; World::camera.farPlane = cameraFar;
         World::camera.aspect = float(Window::width) / float(Window::height);
+
+        if (!Entity::entityMap.count("Camera")) {
+            Transform *cameraTransform = new Transform(glm::vec3(x, y, z), glm::vec3(1.0), glm::vec3(rx, ry, rz));
+            Entity *worldCamera = new Entity("Camera", cameraTransform);
+            worldCamera->addComponent("Camera", &World::camera);
+        }
     }
     else if (block == "FOV") {
         float f;
@@ -365,47 +422,11 @@ void command(string input) {
 
         Component *component = edit->getComponent(componentType);
 
-        int success;
-
-        value = value.substr(value.find_first_not_of(' '));
-
-        if (value == "true" || value == "false") {
-            success = component->assign(assignName, value == "true");
+        if (component == nullptr) {
+            Log << "\aINVALID COMMAND: Component " << componentType << " not on " << name << endl;
+            return;
         }
-        else if (isdigit(value.at(0)) || value[0] == '-') {
-            if (value.find(' ') == value.npos) {
-                float f = stof(value);
-                int i = stoi(value);
-                if (f != i) {
-                    success = component->assign(assignName, f);
-                }
-                else {
-                    success = component->assign(assignName, i);
-                }
-            }
-            else {
-                int n;
-                float num;
-                vector<float> nums;
-                istringstream vec(value);
-                while (vec >> num) {
-                    nums.push_back(num);
-                    n++;
-                }
-                if (n == 2) {
-                    success = component->assign(assignName, glm::vec2(nums[0], nums[1]));
-                }
-                if (n == 3) {
-                    success = component->assign(assignName, glm::vec3(nums[0], nums[1], nums[2]));
-                }
-                if (n == 4) {
-                    success = component->assign(assignName, glm::vec4(nums[0], nums[1], nums[2], nums[3]));
-                }
-            }
-        }
-        else {
-            success = component->assign(assignName, value);
-        }
+        int success = performAssign(*component, assignName, value);
 
         if (success == 1) {
             Log << name << "." << componentType << "." << assignName << " = " << value << endl;
@@ -415,13 +436,115 @@ void command(string input) {
             return;
         }
     }
+    else if (block == "UNIFORM") {
+        string name;
+        iss >> name;
+
+        string uniformName;
+        iss >> uniformName;
+
+        string value;
+        getline(iss, value);
+
+        ShaderProgram shader = ShaderProgram::shaders[name];
+
+        shader.use();
+
+        int success = performAssign(shader, uniformName, value);
+
+        int error = glError();
+
+        shader.stop();
+
+        if (success == 1 && !error) {
+            Log << name << "." << uniformName << " = " << value << endl;
+        }
+        else {
+            Log << "\aINVALID COMMAND " << input << "\a" << endl;
+            return;
+        }
+    }
+    else if (block == "MATERIAL") {
+        string name;
+        iss >> name;
+
+        if (!Entity::entityMap.count(name)) {
+            Log << "\aINVALID COMMAND: " << name << " does not exist\a" << endl;
+            return;
+        }
+        Entity *edit = Entity::entityMap[name];
+
+        string valueName;
+        iss >> valueName;
+
+        string value;
+        iss >> value;
+
+        MeshComponent<Mesh> *mesh = edit->getComponent<MeshComponent<Mesh>>();
+        Material mat = mesh->getMaterial();
+
+        performAssign(mat, valueName, value);
+    }
+    else if (block == "SHADERS") {
+        Log << endl << "Current Shaders: " << endl;
+        for (auto shader : ShaderProgram::shaders) {
+            Log << shader.second.name << endl;
+        }
+    }
+    else if (block == "ENTITY") {
+        string name;
+        iss >> name;
+
+        string edit;
+        iss >> edit;
+
+        string value;
+        iss >> value;
+
+        if (!Entity::entityMap.count(name) && edit != "CREATE") {
+            Log << "\aINVALID COMMAND: " << name << " does not exist\a" << endl;
+            return;
+        }
+
+        if (edit == "NAME") {
+            Entity::entityMap[name]->name = value;
+        }
+        else if (edit == "ACTIVE") {
+            Entity::entityMap[name]->active = value == "true";
+        }
+        else if (edit == "CREATE") {
+            Entity *newEntity = new Entity(name, transformFromString(value));
+        }
+        else if (edit == "DELETE") {
+            Entity* entity = Entity::entityMap[name];
+            auto it = find(Entity::entities.begin(), Entity::entities.end(), entity);
+            Entity::entities.erase(it);
+            Entity::entityMap.erase(name);
+        }
+        else {
+            Log << "\aINVALID COMMAND\a" << endl;
+            return;
+        }
+    }
+    else if (block == "ENTITIES") {
+        Log << endl << "Current Entities: " << endl;
+        for (auto entity : Entity::entityMap) {
+            Log << entity.second->name << endl;
+            for (auto componentName : entity.second->componentNames) {
+                Log << "    " << componentName << endl;
+            }
+        }
+    }
+    else if (block == "WIREFRAME") {
+        wireframe = !wireframe;
+    }
     else if (block == "LOAD") {
         string sceneName;
         if (!(iss >> sceneName)) {
             Log << "\aINVALID COMMAND: " << input << "\a" << endl;
             return;
         }
-//
+
         loadScene(File::getPath(sceneName));
         return;
     }
@@ -432,9 +555,16 @@ void command(string input) {
             return;
         }
 
-        string data = Log.str();
-        ofstream file(fileName);
-        file << Commands.rdbuf();
+        ofstream file(File::getPath(fileName));
+
+        if (!file) {
+
+        }
+        else {
+            file << Commands.rdbuf();
+
+            Log << "Saved to " << fileName << endl;
+        }
 
         file.close();
         return;
@@ -481,6 +611,10 @@ void Window::draw() {
 
     postProcessingBuffer->bind();
 
+    if (wireframe) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (World::skybox != nullptr) {
@@ -494,17 +628,19 @@ void Window::draw() {
         }
     }
 
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     postProcessingBuffer->unbind();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     ShaderProgram::postShader->use();
 
-    ShaderProgram::postShader->setInt("cascadeCount", ShaderProgram::shadowCascadeLevels.size());
+    ShaderProgram::postShader->assign("cascadeCount", (int) ShaderProgram::shadowCascadeLevels.size());
     for (size_t i = 0; i < ShaderProgram::shadowCascadeLevels.size(); ++i)
     {
-        ShaderProgram::postShader->setFloat("cascadePlaneDistances[" + std::to_string(i) + "]",
-                                            World::camera.farPlane / ShaderProgram::shadowCascadeLevels[i]);
+        ShaderProgram::postShader->assign("cascadePlaneDistances[" + std::to_string(i) + "]",
+                                          World::camera.farPlane / ShaderProgram::shadowCascadeLevels[i]);
     }
 
     blit();

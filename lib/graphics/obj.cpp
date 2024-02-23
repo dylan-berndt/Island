@@ -60,14 +60,14 @@ void SkyBox::draw(ShaderProgram &shader) {
     shader.use();
 
     glm::mat4 view = glm::mat4(glm::mat3(ShaderProgram::view));
-    shader.setMat4("view", view);
-    shader.setMat4("model", model);
+    shader.assign("view", view);
+    shader.assign("model", model);
 
     bind();
 
-    glActiveTexture(GL_TEXTURE2);
+    glActiveTexture(GL_TEXTURE0);
     cubeMap.bind();
-    shader.setInt("skybox", 2);
+    shader.assign("skybox", 0);
 
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 

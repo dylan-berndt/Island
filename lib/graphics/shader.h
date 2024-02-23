@@ -5,6 +5,24 @@
 
 #include "../imports.h"
 
+class Light {
+public:
+    static std::vector<Light> lights;
+
+    glm::vec3 color;
+    glm::vec3 position;
+    glm::vec3 rotation;
+
+    float constant = 1.0;
+    float linear = 0.0;
+    float quadratic = 0.0;
+
+    Light(glm::vec3 c, glm::vec3 p, glm::vec3 r) {
+        color = c; position = p; rotation = r;
+        lights.push_back(*this);
+    }
+};
+
 class ShaderProgram {
 public:
     static ShaderProgram *defaultShader;
@@ -12,6 +30,8 @@ public:
     static ShaderProgram *skyboxShader;
     static ShaderProgram *postShader;
     static ShaderProgram *textShader;
+
+    static std::map<std::string, ShaderProgram> shaders;
 
     bool used = false;
 
@@ -34,17 +54,18 @@ public:
     static float nearPlane;
     static float farPlane;
 
-    void openShader(std::string name, int type) const;
-    void compile() const;
+    void openShader(std::string n, int type);
+    void compile();
     void use();
     void stop();
 
-    void setBool(const std::string& name, bool value) const;
-    void setInt(const std::string& name, int value) const;
-    void setFloat(const std::string& name, float value) const;
-    void setVec2(const std::string& name, glm::vec2 value) const;
-    void setVec3(const std::string& name, glm::vec3 value) const;
-    void setMat4(const std::string& name, glm::mat4 value) const;
+    int assign(const std::string& n, int value) const;
+    int assign(const std::string& n, float value) const;
+    int assign(const std::string& n, glm::vec2 value) const;
+    int assign(const std::string& n, glm::vec3 value) const;
+    int assign(const std::string& n, glm::vec4 value) const;
+    int assign(const std::string& n, glm::mat4 value) const;
+    int assign(const std::string& n, std::string s) const {return 0;};
 
     ShaderProgram();
     ShaderProgram(std::string location);

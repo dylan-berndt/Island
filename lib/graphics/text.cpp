@@ -97,11 +97,9 @@ void Font::render(string text, float x, float y, glm::vec3 scale, glm::vec3 colo
     float left = x;
     bool alert = false;
 
-    shader.setVec3("textColor", color);
+    shader.assign("textColor", color);
     glm::mat4 orthographic = glm::ortho(0.0f, float(ShaderProgram::width), 0.0f, float(ShaderProgram::height));
-    shader.setMat4("textProjection", orthographic);
-
-    glActiveTexture(GL_TEXTURE2);
+    shader.assign("textProjection", orthographic);
 
     mesh.bind();
 
@@ -116,7 +114,7 @@ void Font::render(string text, float x, float y, glm::vec3 scale, glm::vec3 colo
 
         if (*c == '\a') {
             alert = !alert;
-            shader.setVec3("textColor", alert ? glm::vec3(1.0, 0.0, 0.0) : color);
+            shader.assign("textColor", alert ? glm::vec3(1.0, 0.0, 0.0) : color);
             continue;
         }
 
@@ -135,8 +133,9 @@ void Font::render(string text, float x, float y, glm::vec3 scale, glm::vec3 colo
                 Vertex(glm::vec3(xpos + w, ypos + h, 0.0), glm::vec2(1.0, 0.0))
         };
 
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, ch.TextureID);
-        shader.setInt("text", 2);
+        shader.assign("text", 0);
 
         mesh.updateSubData(vertices);
 

@@ -3,12 +3,12 @@ out vec4 FragColor;
 
 in vec3 FragPos;
 
-#define WATER_COLOR vec3(0.0, 0.2, 0.3)
+uniform vec3 waterColor = vec3(0.0, 0.2, 0.3);
 
-#define AMBIENT_LIGHT 0.5
+uniform float ambientLight = 0.5;
 
-#define SAMPLES 32
-#define DRAG_MULT 0.2
+uniform int fragSamples = 32;
+uniform float dragMult = 0.2;
 
 uniform samplerCube sky;
 
@@ -28,11 +28,11 @@ float getWaves(vec2 position) {
     float weight = 1.0;
     float sumOfValues = 0.0;
     float sumOfWeights = 0.0;
-    for(int i = 0; i < SAMPLES; i++) {
+    for(int i = 0; i < fragSamples; i++) {
         vec2 p = vec2(sin(iter), cos(iter));
         vec2 res = wavedx(position, p, frequency, time * timeMultiplier);
 
-        position += p * res.y * weight * DRAG_MULT;
+        position += p * res.y * weight * dragMult;
 
         sumOfValues += res.x * weight;
         sumOfWeights += weight;
@@ -56,7 +56,7 @@ vec3 normal(vec2 pos, float e, float depth) {
 }
 
 void main() {
-    vec3 ambient = AMBIENT_LIGHT * lightColor;
+    vec3 ambient = ambientLight * lightColor;
 
     vec3 normal = normal(FragPos.xz, 0.001, 1.0);
 
@@ -74,7 +74,7 @@ void main() {
 
     float shade = shadow(FragPos, 3) * 0.6;
 
-    vec3 result = (ambient + (1.0 - shade) * (diffuse + specular)) * WATER_COLOR;
+    vec3 result = (ambient + (1.0 - shade) * (diffuse + specular)) * waterColor;
 
     result = mix(result, skyReflection, 0.25);
 

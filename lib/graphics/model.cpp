@@ -261,25 +261,25 @@ vector<Material> Model::loadMaterials(string path) {
         if (type == "Kd") {
             float x, y, z;
             iss >> x >> y >> z;
-            mat.setVec3("baseColor", glm::vec3(x, y, z));
+            mat.assign("baseColor", glm::vec3(x, y, z));
         }
         else if (type == "Ka") {
             float x, y, z;
             iss >> x >> y >> z;
-            mat.setVec3("specularColor", glm::vec3(x, y, z));
+            mat.assign("specularColor", glm::vec3(x, y, z));
         }
         else if (type == "Ke") {
             float x, y, z;
             iss >> x >> y >> z;
-            mat.setVec3("emissiveColor", glm::vec3(x, y, z));
+            mat.assign("emissiveColor", glm::vec3(x, y, z));
         }
 
         else if (type == "map_Kd") {
-            mat.setTexture2D("baseTexture", loadTexture(directory, line));
+            mat.assign("baseTexture", loadTexture(directory, line));
         }
 
         else if (type == "map_Bump" || type == "map_bump") {
-            mat.setTexture2D("bumpTexture", loadTexture(directory, line));
+            mat.assign("bumpTexture", loadTexture(directory, line));
         }
 
         else if (type == "newmtl") {

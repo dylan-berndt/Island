@@ -10,13 +10,9 @@
 
 class Camera : public Component {
 public:
-    glm::vec3 position;
-
     glm::vec3 forward;
     glm::vec3 up;
     glm::vec3 right;
-
-    glm::vec3 rotation;
 
     float nearPlane = 0.1f;
     float farPlane = 500.0f;
@@ -34,15 +30,7 @@ public:
     void draw() override {};
     void draw(ShaderProgram &) override {};
 
-    Camera(glm::vec3 position, glm::vec3 rotation);
-    Camera() {position = glm::vec3(0.0); rotation = glm::vec3(0.0);};
-
-    int assign(std::string name, glm::vec3 value) {
-        if (name == "position") { position = value;}
-        else if (name == "rotation") { rotation = value;}
-        else { return 0;}
-        return 1;
-    }
+    Camera() {};
 
     template <typename T>
     int assign(std::string name, T value) {
@@ -66,11 +54,11 @@ private:
 template <typename M = Mesh>
 class MeshComponent : public Component {
 public:
-    void update(float delta) {
+    void update(float delta) override {
         Entity* ptr = Entity::get(entity);
         mesh->model = ptr->transform()->matrix;
     };
-    void draw() {
+    void draw() override {
         shader.use();
         mesh->draw(shader);
         shader.stop();
@@ -132,6 +120,31 @@ public:
         if (name == "text") { text = value;}
         else { return 0;}
         return 1;
+    }
+};
+
+class LightComponent : public Component {
+public:
+    Light *light;
+
+    void update(float) override {
+        Entity *ptr = Entity::get(entity);
+        Transform *transform = ptr->transform();
+
+        light->position = transform->position;
+        light->rotation = transform->rotation;
+    };
+    void draw() override {};
+    void draw(ShaderProgram&) override {};
+
+    LightComponent(glm::vec3 c) {
+        Light *l = new Light(glm::vec3(0.0), glm::vec3(0.0), c);
+        light = l;
+    };
+
+    int assign(std::string name, glm::vec3 v) {
+        if (name == "color") {light->color = v; return 1;}
+        else {return 0;}
     }
 };
 

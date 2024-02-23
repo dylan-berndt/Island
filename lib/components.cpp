@@ -3,24 +3,25 @@
 
 using namespace std;
 
-Camera::Camera(glm::vec3 pos, glm::vec3 rot) {
-    position = pos;
-    rotation = rot;
-
-    getRotation();
-}
-
 void Camera::rotateByMouse(double dx, double dy) {
-    rotation.y += dx * 0.1;
-    rotation.x += dy * 0.1;
+    Entity* ptr = Entity::get(entity);
+    Transform *transform = ptr->transform();
 
-    rotation.x = glm::clamp(rotation.x, -79.0f, 79.0f);
+    transform->rotation.y += dx * 0.1;
+    transform->rotation.x += dy * 0.1;
+
+    transform->rotation.x = glm::clamp(transform->rotation.x, -79.0f, 79.0f);
 
     getRotation();
 }
 
 glm::mat4 Camera::getView() {
     glm::mat4 view(1.0);
+
+    Entity* ptr = Entity::get(entity);
+    Transform *transform = ptr->transform();
+    glm::vec3 position = transform->position;
+    glm::vec3 rotation = transform->rotation;
 
     view = glm::rotate(view, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
     view = glm::rotate(view, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -41,6 +42,11 @@ glm::mat4 Camera::getProjection() {
 }
 
 void Camera::getRotation() {
+    Entity* ptr = Entity::get(entity);
+    Transform *transform = ptr->transform();
+    glm::vec3 position = transform->position;
+    glm::vec3 rotation = transform->rotation;
+
     glm::mat4 view(1.0);
     view = glm::rotate(view, glm::radians(-rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
     view = glm::rotate(view, glm::radians(-rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));

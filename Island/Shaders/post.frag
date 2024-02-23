@@ -17,7 +17,8 @@ float fogDistance = 400.0;
 
 uniform float bloomEffect = 0.5;
 uniform int bloomKernelSize = 4;
-float bloomKernelSizeMultiplier = 4.0;
+uniform float bloomThreshold = 0.6;
+uniform float bloomKernelSizeMultiplier = 4.0;
 
 ivec2 colorSize = textureSize(color.id, 0);
 ivec2 depthSize = textureSize(depth.id, 0);
@@ -49,9 +50,9 @@ vec3 bloom(vec3 original, vec2 position, Texture sampler) {
             }
 
             vec2 sample_position = bloomKernelSizeMultiplier * vec2(x, y) * colorTexelSize + position;
-            vec3 sample_col = texture(sampler.id, sample_position).xyz;
+            vec3 sample_col = texture(sampler.id, clamp(sample_position, 0.0, 1.0)).xyz;
 
-            vec3 bloom_mult = clamp(sample_col - 0.6, 0.0, 1.0);
+            vec3 bloom_mult = clamp(sample_col - bloomThreshold, 0.0, 1.0);
 
             float gauss = gaussian(x, y, bloomKernelSize);
             bloom_add += gauss * bloom_mult * sample_col * bloomKernelSizeMultiplier;

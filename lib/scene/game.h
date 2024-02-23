@@ -6,13 +6,6 @@
 #include "../graphics/shader.h"
 
 
-template <typename T>
-class Member {
-    T pointer;
-    Member(T p) {pointer = p;};
-};
-
-
 class Component {
 public:
     virtual void update(float delta) {};
@@ -88,6 +81,7 @@ public:
     void addComponent(std::string name, Component *c) {
         componentNames.push_back(name);
         components.push_back(c);
+        c->entity = this;
     };
 
     template <typename T>

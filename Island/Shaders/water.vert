@@ -6,8 +6,8 @@ layout (location = 3) in vec3 aTangent;
 
 out vec3 FragPos;
 
-#define SAMPLES 16
-#define DRAG_MULT 0.2
+uniform int vertSamples = 16;
+uniform float dragMult = 0.2;
 
 vec2 wavedx(vec2 position, vec2 direction, float frequency, float timeshift) {
     float x = dot(direction, position) * frequency + timeshift;
@@ -23,11 +23,11 @@ float getWaves(vec2 position) {
     float weight = 1.0;
     float sumOfValues = 0.0;
     float sumOfWeights = 0.0;
-    for(int i = 0; i < SAMPLES; i++) {
+    for(int i = 0; i < vertSamples; i++) {
         vec2 p = vec2(sin(iter), cos(iter));
         vec2 res = wavedx(position, p, frequency, time * timeMultiplier);
 
-        position += p * res.y * weight * DRAG_MULT;
+        position += p * res.y * weight * dragMult;
 
         sumOfValues += res.x * weight;
         sumOfWeights += weight;

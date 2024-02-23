@@ -10,7 +10,7 @@ include_directories(lib/external/glfw-3.3.9.bin.WIN64/include lib/external lib/g
 
 link_directories(lib/external/glfw-3.3.9.bin.WIN64/lib-mingw-w64 lib/external)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DDEBUG)

@@ -19,6 +19,20 @@ struct Texture {
     float bumpMultiplier;
 };
 
+struct Light {
+    int valid;
+
+    vec3 position;
+    vec3 rotation;
+    vec3 color;
+
+    float constant;
+    float linear;
+    float quadratic;
+};
+
+uniform Light lights[16];
+
 uniform float near = 0.1;
 uniform float far = 500.0;
 

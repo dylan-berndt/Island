@@ -116,11 +116,12 @@ MessageCallback( GLenum source,
     if (show == 2) {
         Log << "\a";
     }
+    Log << std::endl;
     Log << "GL CALLBACK: " << (type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "")
         << " type = " << errorType
         << ", severity = " << errorSeverity
         << ", message = " << message
-         << std::endl;
+         << std::endl << std::endl;
     if (show == 2) {
         Log << "\a";
     }

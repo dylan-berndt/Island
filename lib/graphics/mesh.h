@@ -42,17 +42,19 @@ public:
     Texture2D roughnessTexture;
     Texture2D specularTexture;
 
-    std::string name = "";
+    std::string name;
 
-    void setBool(std::string name, bool value) {booleans.insert(std::pair<std::string, bool>(name, value));};
-    void setInt(std::string name, int value) {integers.insert(std::pair<std::string, int>(name, value));};
-    void setFloat(std::string name, float value) {floats.insert(std::pair<std::string, float>(name, value));};
-    void setVec3(std::string name, glm::vec3 value) {vec3s.insert(std::pair<std::string, glm::vec3>(name, value));};
-    void setVec2(std::string name, glm::vec2 value) {vec2s.insert(std::pair<std::string, glm::vec2>(name, value));};
-    void setMat4(std::string name, glm::mat4 value) {mat4s.insert(std::pair<std::string, glm::mat4>(name, value));};
-    void setTexture2D(std::string name, Texture2D value) {textures.insert(std::pair<std::string, Texture2D>(name, value));};
-    void setCubeMap(std::string name, CubeMap value) {cubeMaps.insert(std::pair<std::string, CubeMap>(name, value));};
-    void setTexture2DArray(std::string name, Texture2DArray value) {textureArrays.insert(std::pair<std::string, Texture2DArray>(name, value));};
+    int assign(std::string n, bool value) {booleans.insert(std::pair<std::string, bool>(n, value)); return 1;};
+    int assign(std::string n, int value) {integers.insert(std::pair<std::string, int>(n, value)); return 1;};
+    int assign(std::string n, float value) {floats.insert(std::pair<std::string, float>(n, value)); return 1;};
+    int assign(std::string n, std::string value) {return 0;};
+    int assign(std::string n, glm::vec4 value) {vec4s.insert(std::pair<std::string, glm::vec3>(n, value)); return 1;};
+    int assign(std::string n, glm::vec3 value) {vec3s.insert(std::pair<std::string, glm::vec3>(n, value)); return 1;};
+    int assign(std::string n, glm::vec2 value) {vec2s.insert(std::pair<std::string, glm::vec2>(n, value)); return 1;};
+    int assign(std::string n, glm::mat4 value) {mat4s.insert(std::pair<std::string, glm::mat4>(n, value)); return 1;};
+    int assign(std::string n, Texture2D value) {textures.insert(std::pair<std::string, Texture2D>(n, value)); return 1;};
+    int assign(std::string n, CubeMap value) {cubeMaps.insert(std::pair<std::string, CubeMap>(name, value)); return 1;};
+    int assign(std::string n, Texture2DArray value) {textureArrays.insert(std::pair<std::string, Texture2DArray>(n, value)); return 1;};
 
     void use(ShaderProgram &shader);
 
@@ -62,6 +64,7 @@ private:
     std::map<std::string, bool> booleans;
     std::map<std::string, int> integers;
     std::map<std::string, float> floats;
+    std::map<std::string, glm::vec3> vec4s;
     std::map<std::string, glm::vec3> vec3s;
     std::map<std::string, glm::vec2> vec2s;
     std::map<std::string, Texture2D> textures;
